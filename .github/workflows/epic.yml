@@ -1,0 +1,56 @@
+name: Epic Free Games Bot
+
+on:
+  # Toutes les heures en temps normal
+  schedule:
+    - cron: "0 * * * *"
+
+  # Le jeudi entre 15h et 20h UTC → toutes les 10 minutes
+  # (Epic publie les jeux le jeudi ~16h-17h UTC)
+  # Note : GitHub Actions ne supporte pas deux crons dans le même trigger,
+  # on utilise un second job qui se déclenche différemment.
+  # La garde intelligente est gérée dans scheduler.py côté Python.
+
+  # Déclenchement manuel (pour tests)
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run bot
+        env:
+          DISCORD_WEBHOOK  : ${{ secrets.DISCORD_WEBHOOK }}
+          ALERT_WEBHOOK    : ${{ secrets.ALERT_WEBHOOK }}
+          ROLE_ID          : ${{ secrets.ROLE_ID }}
+          AUTO_CLAIM       : ${{ secrets.AUTO_CLAIM }}
+          EPIC_BEARER_TOKEN: ${{ secrets.EPIC_BEARER_TOKEN }}
+          EPIC_SESSION_AP  : ${{ secrets.EPIC_SESSION_AP }}
+          CLAIM_RETRIES    : ${{ secrets.CLAIM_RETRIES }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python main.py
+
+      - name: Commit state.json
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add state.json
+          git diff --staged --quiet || git commit -m "chore: update state.json [skip ci]"
+          git push
