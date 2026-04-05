@@ -13,6 +13,7 @@ Gère :
 import time
 import requests
 from config import cfg
+from auth import auth
 from logger import log
 
 ORDER_URL = "https://store.epicgames.com/api/order/v3/orders/public/orders"
@@ -28,8 +29,10 @@ class ClaimResult:
 
 
 def _headers() -> dict:
+    # Préfère le token rafraîchi automatiquement, sinon fallback sur le token manuel
+    token = auth.bearer_token or cfg.BEARER_TOKEN
     return {
-        "Authorization": f"Bearer {cfg.BEARER_TOKEN}",
+        "Authorization": f"Bearer {token}",
         "Content-Type" : "application/json",
         "User-Agent"   : (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -42,6 +45,9 @@ def _headers() -> dict:
 
 
 def _cookies() -> dict:
+    # Avec un token rafraîchi via OAuth, le cookie SESSION_AP n'est pas nécessaire
+    if auth.bearer_token:
+        return {}
     return {"EPIC_SESSION_AP": cfg.SESSION_AP}
 
 

@@ -5,6 +5,7 @@ library.py — Vérifie si un jeu est déjà dans la bibliothèque Epic Games.
 
 import requests
 from config import cfg
+from auth import auth
 from logger import log
 
 LIBRARY_URL = (
@@ -13,8 +14,9 @@ LIBRARY_URL = (
 )
 
 def _headers() -> dict:
+    token = auth.bearer_token or cfg.BEARER_TOKEN
     return {
-        "Authorization": f"Bearer {cfg.BEARER_TOKEN}",
+        "Authorization": f"Bearer {token}",
         "User-Agent"   : (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
             "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -23,6 +25,8 @@ def _headers() -> dict:
     }
 
 def _cookies() -> dict:
+    if auth.bearer_token:
+        return {}
     return {"EPIC_SESSION_AP": cfg.SESSION_AP}
 
 

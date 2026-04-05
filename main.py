@@ -14,6 +14,7 @@ Flux complet :
 
 import sys
 from config import cfg
+from auth import auth
 from state import State
 from epic import get_free_games
 from mobile import get_epic_mobile_games, get_new_mobile_games
@@ -23,7 +24,8 @@ from notifier import (
     notify_new_game, notify_claimed, notify_already_owned,
     notify_mobile_game,
     alert_cookies_expired, alert_eula_required, alert_captcha,
-    alert_claim_failed, alert_api_down, send_heartbeat,
+    alert_claim_failed, alert_api_down, alert_refresh_expired,
+    send_heartbeat,
 )
 from scheduler import should_run
 from logger import log
@@ -71,7 +73,16 @@ def main():
         state.save()
         return
 
-    # 2. Récupère les jeux gratuits
+    # 2. Refresh automatique du bearer token (si refresh token configuré)
+    if cfg.REFRESH_TOKEN:
+        if auth.refresh(cfg.REFRESH_TOKEN):
+            log.info("Token Epic rafraîchi automatiquement.")
+            state.set_cookies_expired(False)
+        else:
+            log.warning("Échec du refresh token — réclamation auto impossible.")
+            alert_refresh_expired()
+
+    # 3. Récupère les jeux gratuits
     try:
         games = get_free_games()
     except Exception:
@@ -82,12 +93,12 @@ def main():
     current_games = [g for g in games if g["status"] == "current"]
     log.info(f"{len(current_games)} jeu(x) actuellement gratuit(s).")
 
-    # 3. Récupère la bibliothèque Epic (si les cookies sont configurés)
+    # 4. Récupère la bibliothèque Epic (si les cookies sont configurés)
     owned_ids: set[str] = set()
     if cfg.can_claim:
         owned_ids = get_owned_ids()
 
-    # 4. Nouveaux jeux → notification + réclamation
+    # 5. Nouveaux jeux → notification + réclamation
     for game in current_games:
         if not state.is_notified(game["id"]):
             log.info(f"Nouveau jeu détecté : {game['title']}")
@@ -104,7 +115,7 @@ def main():
             else:
                 log.info("Réclamation auto désactivée ou cookies manquants.")
 
-    # 5. Retry des jeux précédemment en échec
+    # 6. Retry des jeux précédemment en échec
     pending = state.pending_claim()
     if pending:
         log.info(f"{len(pending)} jeu(x) en attente de retry.")
@@ -124,14 +135,14 @@ def main():
         else:
             log.info("Cookies manquants — retry impossible.")
 
-    # 6. Réinitialise le flag cookies_expired si on a réussi une réclamation
+    # 7. Réinitialise le flag cookies_expired si on a réussi une réclamation
     if any(
         state.get_game(g["id"]) and state.get_game(g["id"])["status"] == "claimed"
         for g in current_games
     ):
         state.set_cookies_expired(False)
 
-    # 7. Jeux gratuits mobiles (iOS / Android) — notification uniquement
+    # 8. Jeux gratuits mobiles (iOS / Android) — notification uniquement
     try:
         mobile_games = get_epic_mobile_games()
         seen_ids     = set(state._data["games"].keys())
@@ -154,12 +165,12 @@ def main():
     except Exception as e:
         log.warning(f"[MOBILE] Erreur récupération jeux mobiles : {e}")
 
-    # 8. Heartbeat hebdomadaire
+    # 9. Heartbeat hebdomadaire
     if state.needs_heartbeat():
         send_heartbeat(state.summary())
         state.mark_heartbeat()
 
-    # 9. Sauvegarde
+    # 10. Sauvegarde
     state.save()
     log.info("Done.")
 

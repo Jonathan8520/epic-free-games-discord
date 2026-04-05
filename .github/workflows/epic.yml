@@ -41,9 +41,10 @@ jobs:
           ALERT_WEBHOOK    : ${{ secrets.ALERT_WEBHOOK }}
           ROLE_ID          : ${{ secrets.ROLE_ID }}
           AUTO_CLAIM       : ${{ secrets.AUTO_CLAIM }}
-          EPIC_BEARER_TOKEN: ${{ secrets.EPIC_BEARER_TOKEN }}
-          EPIC_SESSION_AP  : ${{ secrets.EPIC_SESSION_AP }}
-          CLAIM_RETRIES    : ${{ secrets.CLAIM_RETRIES }}
+          EPIC_BEARER_TOKEN : ${{ secrets.EPIC_BEARER_TOKEN }}
+          EPIC_SESSION_AP   : ${{ secrets.EPIC_SESSION_AP }}
+          EPIC_REFRESH_TOKEN: ${{ secrets.EPIC_REFRESH_TOKEN }}
+          CLAIM_RETRIES     : ${{ secrets.CLAIM_RETRIES }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: python main.py
 

@@ -135,6 +135,24 @@ def alert_claim_failed(game: dict, error: str, retries: int):
     })
 
 
+def alert_refresh_expired():
+    """Alerte : le refresh token a expiré, il faut le renouveler manuellement."""
+    _post(cfg.alert_webhook, {
+        "content": (
+            "🔑 **Refresh token Epic expiré !**\n"
+            "Le bot ne peut plus rafraîchir automatiquement le bearer token.\n"
+            "Il faut renouveler le `EPIC_REFRESH_TOKEN` dans les secrets GitHub.\n\n"
+            "**Comment faire :**\n"
+            "1. Va sur https://store.epicgames.com et connecte-toi\n"
+            "2. F12 → Network → filtre `graphql` → clique une requête\n"
+            "3. Dans les cookies, copie la valeur de `REFRESH_EPIC_EG1`\n"
+            f"4. Colle-la ici : {cfg.secrets_url}\n\n"
+            "_Ce token dure ~1 an, tu ne devrais pas avoir à refaire ça souvent._"
+        )
+    })
+    log.warning("[NOTIFIER] Alerte refresh token expiré envoyée.")
+
+
 def alert_api_down():
     """L'API Epic est inaccessible."""
     _post(cfg.alert_webhook, {
