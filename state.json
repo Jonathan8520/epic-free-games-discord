@@ -1,26 +1,7 @@
 {
-  "games": {
-    "c6479f31043943d0b1710cc5983f53c6": {
-      "title": "Clone Drone in the Danger Zone",
-      "status": "failed",
-      "notified_at": "2026-04-07T13:07:24.807946+00:00",
-      "claimed_at": null,
-      "retries": 2,
-      "last_error": "Namespace ou ID manquant",
-      "value": "17,99 €"
-    },
-    "9f67865fcf0749a58f4d35827473266f": {
-      "title": "TOMAK: Save the Earth Regeneration",
-      "status": "failed",
-      "notified_at": "2026-04-07T13:07:25.530948+00:00",
-      "claimed_at": null,
-      "retries": 2,
-      "last_error": "Namespace ou ID manquant",
-      "value": "8,09 €"
-    }
-  },
-  "cookies_expired": true,
-  "last_check": "2026-04-07T13:16:41.710866+00:00",
+  "games": {},
+  "cookies_expired": false,
+  "last_check": null,
   "heartbeat_sent_week": "2026-W14",
   "total_saved_eur": 0.0
 }
