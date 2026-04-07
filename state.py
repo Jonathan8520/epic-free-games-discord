@@ -99,6 +99,8 @@ class State:
     def mark_notified(self, game: dict):
         self._data["games"][game["id"]] = {
             "title"       : game["title"],
+            "namespace"   : game.get("namespace", ""),
+            "url"         : game.get("url", ""),
             "status"      : "notified",
             "notified_at" : _now(),
             "claimed_at"  : None,

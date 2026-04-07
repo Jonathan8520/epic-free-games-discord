@@ -49,18 +49,27 @@ Settings → Secrets and variables → Actions → New repository secret
 
 *Requis si `AUTO_CLAIM=true`. Le refresh token est la méthode recommandée : il dure ~1 an et le bot rafraîchit automatiquement le bearer token à chaque run.
 
-### 3. Récupérer le refresh token Epic (recommandé)
+### 3. Générer le refresh token Epic (recommandé)
 
-1. Va sur https://store.epicgames.com et connecte-toi
-2. Ouvre les DevTools (F12)
-3. Onglet **Network** → filtre `graphql` → recharge la page (F5)
-4. Clique sur une requête `graphql.epicgames.com`
-5. Dans les **Request Headers**, cherche la ligne `cookie:`
-6. Copie la valeur du cookie `REFRESH_EPIC_EG1` (commence par `eg1~eyJ...`)
-7. Colle-la dans le secret GitHub `EPIC_REFRESH_TOKEN`
+Le refresh token doit être généré **une seule fois en local** via `bootstrap.py`.
+Il dure ~1 an et le bot se rafraîchit tout seul ensuite.
 
-> Ce token dure ~1 an. Le bot rafraîchit automatiquement le bearer token à chaque run.
-> Quand il expire, le bot t'enverra une alerte Discord avec les instructions pour le renouveler.
+1. **Connecte-toi** à Epic Games dans ton navigateur : https://www.epicgames.com
+2. **Visite cette URL** pour obtenir un authorization code :
+   ```
+   https://www.epicgames.com/id/api/redirect?clientId=34a02cf8f4414e29b15921876da36f9a&responseType=code
+   ```
+3. **Copie la valeur** du champ `authorizationCode` dans le JSON affiché
+4. **Lance le script** en local :
+   ```bash
+   pip install requests
+   python bootstrap.py <authorizationCode>
+   ```
+5. **Copie le refresh token** affiché → secret GitHub `EPIC_REFRESH_TOKEN`
+
+> Le authorization code est valable **5 minutes** et usable une seule fois.
+> Si ça expire, recharge l'URL pour en obtenir un nouveau.
+> Quand le refresh token expire (~1 an), le bot t'enverra une alerte Discord.
 
 <details>
 <summary>Méthode alternative (tokens manuels, expire vite)</summary>
