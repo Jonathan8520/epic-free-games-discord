@@ -1,30 +1,7 @@
 {
-  "games": {
-    "c6479f31043943d0b1710cc5983f53c6": {
-      "title": "Clone Drone in the Danger Zone",
-      "namespace": "59d27ef047494b999bf0b04ddc471a07",
-      "url": "https://store.epicgames.com/fr/p/4d7e959581394dc4aee2039844753beb",
-      "status": "failed",
-      "notified_at": "2026-04-07T13:19:07.323632+00:00",
-      "claimed_at": null,
-      "retries": 2,
-      "last_error": "HTTP 403",
-      "value": "17,99 €"
-    },
-    "9f67865fcf0749a58f4d35827473266f": {
-      "title": "TOMAK: Save the Earth Regeneration",
-      "namespace": "7de6896ed120435fba9433d2732dadb4",
-      "url": "https://store.epicgames.com/fr/p/798328bff911452783523d61986170c0",
-      "status": "failed",
-      "notified_at": "2026-04-07T13:19:08.855053+00:00",
-      "claimed_at": null,
-      "retries": 2,
-      "last_error": "HTTP 403",
-      "value": "8,09 €"
-    }
-  },
-  "cookies_expired": true,
-  "last_check": "2026-04-07T13:19:10.059836+00:00",
+  "games": {},
+  "cookies_expired": false,
+  "last_check": null,
   "heartbeat_sent_week": "2026-W14",
   "total_saved_eur": 0.0
 }
