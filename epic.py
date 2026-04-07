@@ -36,33 +36,35 @@ def _extract_price(game: dict) -> str | None:
         return None
 
 
-def _is_free_now(game: dict) -> bool:
-    now = datetime.now(timezone.utc)
+def _free_dates(game: dict, key: str) -> tuple[str, str] | None:
+    """Retourne (startDate, endDate) ISO du premier offer 100% gratuit du groupe `key`."""
     try:
-        for group in game["promotions"]["promotionalOffers"]:
+        for group in game["promotions"][key]:
             for offer in group.get("promotionalOffers", []):
-                start    = datetime.fromisoformat(offer["startDate"].replace("Z", "+00:00"))
-                end      = datetime.fromisoformat(offer["endDate"].replace("Z", "+00:00"))
-                discount = offer["discountSetting"]["discountPercentage"]
-                if start <= now <= end and discount == 0:
-                    return True
+                if offer["discountSetting"]["discountPercentage"] == 0:
+                    return offer["startDate"], offer["endDate"]
     except (KeyError, TypeError):
         pass
-    return False
+    return None
+
+
+def _is_free_now(game: dict) -> bool:
+    now = datetime.now(timezone.utc)
+    dates = _free_dates(game, "promotionalOffers")
+    if not dates:
+        return False
+    start = datetime.fromisoformat(dates[0].replace("Z", "+00:00"))
+    end   = datetime.fromisoformat(dates[1].replace("Z", "+00:00"))
+    return start <= now <= end
 
 
 def _is_free_next(game: dict) -> bool:
     now = datetime.now(timezone.utc)
-    try:
-        for group in game["promotions"]["upcomingPromotionalOffers"]:
-            for offer in group.get("promotionalOffers", []):
-                start    = datetime.fromisoformat(offer["startDate"].replace("Z", "+00:00"))
-                discount = offer["discountSetting"]["discountPercentage"]
-                if start > now and discount == 0:
-                    return True
-    except (KeyError, TypeError):
-        pass
-    return False
+    dates = _free_dates(game, "upcomingPromotionalOffers")
+    if not dates:
+        return False
+    start = datetime.fromisoformat(dates[0].replace("Z", "+00:00"))
+    return start > now
 
 
 def _extract_slug(game: dict) -> str:
@@ -103,6 +105,12 @@ def _parse_game(game: dict, status: str) -> dict:
         f"https://store.epicgames.com/fr/p/{slug}"
         if slug else "https://store.epicgames.com/fr/free-games"
     )
+
+    # Dates de la promo (current ou upcoming selon le statut)
+    key = "promotionalOffers" if status == "current" else "upcomingPromotionalOffers"
+    dates = _free_dates(game, key)
+    start_date, end_date = (dates if dates else (None, None))
+
     return {
         "id"             : game.get("id", ""),
         "title"          : game.get("title", "Jeu inconnu"),
@@ -113,6 +121,8 @@ def _parse_game(game: dict, status: str) -> dict:
         "status"         : status,
         "namespace"      : game.get("namespace", ""),
         "offer_type"     : game.get("offerType", ""),
+        "start_date"     : start_date,
+        "end_date"       : end_date,
     }
 
 

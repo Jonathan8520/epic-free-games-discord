@@ -7,9 +7,20 @@ Deux webhooks distincts :
   Si ALERT_WEBHOOK n'est pas défini, les alertes vont dans le salon principal.
 """
 
+from datetime import datetime
 import requests
 from config import cfg
 from logger import log
+
+
+def _ts(iso_date: str | None) -> int | None:
+    """Convertit une date ISO Epic en timestamp Unix pour Discord."""
+    if not iso_date:
+        return None
+    try:
+        return int(datetime.fromisoformat(iso_date.replace("Z", "+00:00")).timestamp())
+    except (ValueError, TypeError):
+        return None
 
 
 def _post(webhook_url: str, payload: dict):
@@ -34,6 +45,23 @@ def _game_embed(game: dict, color: int = 0x1ED760) -> dict:
             "value" : f"~~{price}~~  →  **GRATUIT**",
             "inline": True,
         })
+
+    start_ts = _ts(game.get("start_date"))
+    end_ts   = _ts(game.get("end_date"))
+    if end_ts:
+        if start_ts and start_ts > int(datetime.now().timestamp()):
+            fields.append({
+                "name"  : "Disponible",
+                "value" : f"<t:{start_ts}:R> → <t:{end_ts}:R>",
+                "inline": True,
+            })
+        else:
+            fields.append({
+                "name"  : "Expire",
+                "value" : f"<t:{end_ts}:R>\n<t:{end_ts}:f>",
+                "inline": True,
+            })
+
     fields.append({
         "name"  : "Récupérer le jeu",
         "value" : f"[Ouvrir le store Epic]({url})",
