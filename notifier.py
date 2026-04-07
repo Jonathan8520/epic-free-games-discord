@@ -33,7 +33,6 @@ def _post(webhook_url: str, payload: dict):
 
 def _game_embed(game: dict, color: int = 0x1ED760) -> dict:
     title = game.get("title", "Jeu inconnu")
-    desc  = game.get("description", "")[:300]
     url   = game.get("url", "https://store.epicgames.com/fr/free-games")
     image = game.get("image")
     price = game.get("original_price")
@@ -69,12 +68,11 @@ def _game_embed(game: dict, color: int = 0x1ED760) -> dict:
     })
 
     embed = {
-        "title"      : f"🎮 {title}",
-        "description": desc + ("…" if len(game.get("description", "")) > 300 else ""),
-        "url"        : url,
-        "color"      : color,
-        "fields"     : fields,
-        "footer"     : {"text": "Epic Games Store • Gratuit cette semaine"},
+        "title" : f"🎮 {title}",
+        "url"   : url,
+        "color" : color,
+        "fields": fields,
+        "footer": {"text": "Epic Games Store • Gratuit cette semaine"},
     }
     if image:
         embed["thumbnail"] = {"url": image}
