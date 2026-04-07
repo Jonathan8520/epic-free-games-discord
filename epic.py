@@ -142,3 +142,89 @@ def get_free_games() -> list[dict]:
     log.info(f"API Epic : {sum(1 for g in result if g['status']=='current')} jeu(x) gratuit(s) actuellement, "
              f"{sum(1 for g in result if g['status']=='next')} à venir.")
     return result
+
+
+# ── Bonus : -100% surprise (hors promo hebdo) ──────────────────
+
+GRAPHQL_URL = "https://store.epicgames.com/graphql"
+
+SEARCH_QUERY = """
+query searchStoreQuery($category: String, $count: Int, $country: String!, $locale: String, $priceRange: String) {
+  Catalog {
+    searchStore(category: $category, count: $count, country: $country, locale: $locale, priceRange: $priceRange) {
+      elements {
+        id
+        title
+        description
+        namespace
+        offerType
+        productSlug
+        urlSlug
+        keyImages { type url }
+        catalogNs { mappings { pageSlug } }
+        offerMappings { pageSlug }
+        price(country: $country) {
+          totalPrice {
+            discountPrice
+            originalPrice
+            fmtPrice(locale: $locale) { originalPrice discountPrice }
+          }
+        }
+      }
+    }
+  }
+}
+"""
+
+
+def get_surprise_free_games(exclude_ids: set[str] | None = None) -> list[dict]:
+    """
+    Cherche les jeux du catalogue actuellement à 0€ (hors promo hebdo).
+    Filtre les démos et les jeux déjà couverts par get_free_games().
+    Retourne une liste vide en cas d'erreur (non bloquant).
+    """
+    exclude_ids = exclude_ids or set()
+    try:
+        resp = requests.post(
+            GRAPHQL_URL,
+            json={
+                "query": SEARCH_QUERY,
+                "variables": {
+                    "category"  : "games/edition/base",
+                    "count"     : 40,
+                    "country"   : "FR",
+                    "locale"    : "fr",
+                    "priceRange": "[0,0]",
+                },
+            },
+            headers={**HEADERS, "Content-Type": "application/json"},
+            timeout=15,
+        )
+        resp.raise_for_status()
+        elements = resp.json()["data"]["Catalog"]["searchStore"]["elements"]
+    except (requests.RequestException, KeyError, TypeError) as e:
+        log.warning(f"[SURPRISE] API searchStore inaccessible : {e}")
+        return []
+
+    result = []
+    for game in elements:
+        # Skip démos, bundles, addons
+        if game.get("offerType") not in ("BASE_GAME", "OTHERS"):
+            continue
+        # Skip si déjà notifié via la promo hebdo
+        if game.get("id") in exclude_ids:
+            continue
+        # Vérif réelle du prix actuel
+        try:
+            current_price = game["price"]["totalPrice"]["discountPrice"]
+            original      = game["price"]["totalPrice"]["originalPrice"]
+        except (KeyError, TypeError):
+            continue
+        # On veut un jeu normalement payant, actuellement à 0
+        if current_price != 0 or original == 0:
+            continue
+
+        result.append(_parse_game(game, "surprise"))
+
+    log.info(f"[SURPRISE] {len(result)} jeu(x) à -100% hors promo hebdo.")
+    return result

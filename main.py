@@ -12,9 +12,9 @@ Flux :
 import sys
 from config import cfg
 from state import State
-from epic import get_free_games
+from epic import get_free_games, get_surprise_free_games
 from mobile import get_epic_mobile_games, get_new_mobile_games
-from notifier import notify_new_game, notify_upcoming_game, notify_mobile_game, alert_api_down
+from notifier import notify_new_game, notify_upcoming_game, notify_surprise_game, notify_mobile_game, alert_api_down
 from scheduler import should_run
 from logger import log
 
@@ -57,7 +57,19 @@ def main():
             notify_upcoming_game(game)
             state.mark_notified(game)
 
-    # 5. Jeux gratuits mobiles (iOS / Android)
+    # 5. Jeux à -100% surprise (hors promo hebdo)
+    try:
+        weekly_ids = {g["id"] for g in games}
+        surprise   = get_surprise_free_games(exclude_ids=weekly_ids)
+        for game in surprise:
+            if not state.is_notified(game["id"]):
+                log.info(f"Surprise gratuite détectée : {game['title']}")
+                notify_surprise_game(game)
+                state.mark_notified(game)
+    except Exception as e:
+        log.warning(f"[SURPRISE] Erreur : {e}")
+
+    # 6. Jeux gratuits mobiles (iOS / Android)
     try:
         mobile_games = get_epic_mobile_games()
         seen_ids     = set(state._data["games"].keys())
