@@ -1,1 +1,23 @@
-{"games":{},"last_check":null}
+{
+  "games": {
+    "c6479f31043943d0b1710cc5983f53c6": {
+      "title": "Clone Drone in the Danger Zone",
+      "url": "https://store.epicgames.com/fr/p/clone-drone-in-the-danger-zone-4daf6e",
+      "notified_at": "2026-04-07T14:25:58.633319+00:00",
+      "value": "17,99 €"
+    },
+    "9f67865fcf0749a58f4d35827473266f": {
+      "title": "TOMAK: Save the Earth Regeneration",
+      "url": "https://store.epicgames.com/fr/p/tomak-save-the-earth-regeneration-c1207c",
+      "notified_at": "2026-04-07T14:25:58.951416+00:00",
+      "value": "8,09 €"
+    },
+    "bc9b3091841840ad974ff525873d48c1": {
+      "title": "Prop Sumo",
+      "url": "https://store.epicgames.com/fr/p/propsumo-ca8bd7",
+      "notified_at": "2026-04-07T14:25:59.303555+00:00",
+      "value": "8,99 €"
+    }
+  },
+  "last_check": "2026-04-07T14:26:00.502408+00:00"
+}
