@@ -49,7 +49,7 @@ def _game_embed(game: dict, color: int = 0x1ED760) -> dict:
         "footer"     : {"text": "Epic Games Store • Gratuit cette semaine"},
     }
     if image:
-        embed["image"] = {"url": image}
+        embed["thumbnail"] = {"url": image}
     return embed
 
 
