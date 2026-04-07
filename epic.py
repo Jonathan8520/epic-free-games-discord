@@ -65,8 +65,40 @@ def _is_free_next(game: dict) -> bool:
     return False
 
 
-def _parse_game(game: dict, status: str) -> dict:
+def _extract_slug(game: dict) -> str:
+    """
+    Cherche le vrai slug du produit dans plusieurs champs possibles.
+    Epic met le slug à différents endroits selon le type d'offre.
+    """
+    # 1. catalogNs.mappings[].pageSlug (le plus fiable pour les jeux récents)
+    try:
+        for m in game.get("catalogNs", {}).get("mappings", []) or []:
+            slug = m.get("pageSlug")
+            if slug:
+                return slug
+    except (AttributeError, TypeError):
+        pass
+
+    # 2. offerMappings[].pageSlug
+    try:
+        for m in game.get("offerMappings", []) or []:
+            slug = m.get("pageSlug")
+            if slug:
+                return slug
+    except (AttributeError, TypeError):
+        pass
+
+    # 3. productSlug / urlSlug (legacy)
     slug = game.get("productSlug") or game.get("urlSlug") or ""
+    # Vire les suffixes type "/home" qu'Epic ajoute parfois
+    if slug:
+        return slug.split("/")[0]
+
+    return ""
+
+
+def _parse_game(game: dict, status: str) -> dict:
+    slug = _extract_slug(game)
     url  = (
         f"https://store.epicgames.com/fr/p/{slug}"
         if slug else "https://store.epicgames.com/fr/free-games"
