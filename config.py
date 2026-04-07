@@ -12,7 +12,8 @@ def _require(key: str) -> str:
     return val
 
 def _optional(key: str, default: str = "") -> str:
-    return os.getenv(key, default)
+    val = os.getenv(key, default)
+    return val if val else default
 
 def _bool(key: str, default: bool = True) -> bool:
     return os.getenv(key, str(default)).lower() in ("true", "1", "yes")
