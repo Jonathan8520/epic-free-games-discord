@@ -1,17 +1,8 @@
 name: Epic Free Games Bot
 
 on:
-  # Toutes les heures en temps normal
   schedule:
-    - cron: "0 * * * *"
-
-  # Le jeudi entre 15h et 20h UTC → toutes les 10 minutes
-  # (Epic publie les jeux le jeudi ~16h-17h UTC)
-  # Note : GitHub Actions ne supporte pas deux crons dans le même trigger,
-  # on utilise un second job qui se déclenche différemment.
-  # La garde intelligente est gérée dans scheduler.py côté Python.
-
-  # Déclenchement manuel (pour tests)
+    - cron: "0 * * * *"  # Toutes les heures (le scheduler Python filtre)
   workflow_dispatch:
 
 jobs:
@@ -40,11 +31,6 @@ jobs:
           DISCORD_WEBHOOK  : ${{ secrets.DISCORD_WEBHOOK }}
           ALERT_WEBHOOK    : ${{ secrets.ALERT_WEBHOOK }}
           ROLE_ID          : ${{ secrets.ROLE_ID }}
-          AUTO_CLAIM       : ${{ secrets.AUTO_CLAIM }}
-          EPIC_BEARER_TOKEN : ${{ secrets.EPIC_BEARER_TOKEN }}
-          EPIC_SESSION_AP   : ${{ secrets.EPIC_SESSION_AP }}
-          EPIC_REFRESH_TOKEN: ${{ secrets.EPIC_REFRESH_TOKEN }}
-          CLAIM_RETRIES     : ${{ secrets.CLAIM_RETRIES }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: python main.py
 
