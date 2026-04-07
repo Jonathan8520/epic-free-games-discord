@@ -12,10 +12,15 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout
+      - name: Checkout main
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Get state.json from datas branch
+        run: git checkout origin/datas -- state.json
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -34,10 +39,12 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: python main.py
 
-      - name: Commit state.json
+      - name: Push state.json to datas branch
         run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          cp state.json /tmp/state.json
+          git checkout datas
+          cp /tmp/state.json state.json
           git add state.json
-          git diff --staged --quiet || git commit -m "chore: update state.json [skip ci]"
-          git push
+          git diff --cached --quiet && exit 0
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "chore: update state.json"
+          git push origin datas
