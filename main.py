@@ -4,10 +4,9 @@ main.py — Orchestrateur principal déclenché par GitHub Actions.
 Flux :
 1. Vérifie si ce run est nécessaire (scheduler)
 2. Récupère les jeux gratuits Epic (epic.py)
-3. Notifie sur Discord les nouveaux jeux
+3. Notifie sur Discord les nouveaux jeux (current + upcoming)
 4. Notifie les jeux mobiles gratuits (GamerPower)
-5. Envoie le heartbeat hebdomadaire
-6. Sauvegarde l'état
+5. Sauvegarde l'état
 """
 
 import sys
@@ -15,7 +14,7 @@ from config import cfg
 from state import State
 from epic import get_free_games
 from mobile import get_epic_mobile_games, get_new_mobile_games
-from notifier import notify_new_game, notify_mobile_game, alert_api_down, send_heartbeat
+from notifier import notify_new_game, notify_upcoming_game, notify_mobile_game, alert_api_down
 from scheduler import should_run
 from logger import log
 
@@ -40,17 +39,25 @@ def main():
         alert_api_down()
         return
 
-    current_games = [g for g in games if g["status"] == "current"]
-    log.info(f"{len(current_games)} jeu(x) actuellement gratuit(s).")
+    current_games  = [g for g in games if g["status"] == "current"]
+    upcoming_games = [g for g in games if g["status"] == "next"]
+    log.info(f"{len(current_games)} actuel(s), {len(upcoming_games)} à venir.")
 
-    # 3. Nouveaux jeux → notification
+    # 3. Jeux actuellement gratuits → notification
     for game in current_games:
         if not state.is_notified(game["id"]):
             log.info(f"Nouveau jeu détecté : {game['title']}")
             notify_new_game(game)
             state.mark_notified(game)
 
-    # 4. Jeux gratuits mobiles (iOS / Android)
+    # 4. Jeux à venir → notification "bientôt gratuit"
+    for game in upcoming_games:
+        if not state.is_notified(game["id"]):
+            log.info(f"Jeu à venir détecté : {game['title']}")
+            notify_upcoming_game(game)
+            state.mark_notified(game)
+
+    # 5. Jeux gratuits mobiles (iOS / Android)
     try:
         mobile_games = get_epic_mobile_games()
         seen_ids     = set(state._data["games"].keys())
@@ -68,11 +75,6 @@ def main():
             })
     except Exception as e:
         log.warning(f"[MOBILE] Erreur récupération jeux mobiles : {e}")
-
-    # 5. Heartbeat hebdomadaire
-    if state.needs_heartbeat():
-        send_heartbeat(state.summary())
-        state.mark_heartbeat()
 
     # 6. Sauvegarde
     state.save()

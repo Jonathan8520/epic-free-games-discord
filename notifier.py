@@ -63,6 +63,18 @@ def notify_new_game(game: dict):
     log.info(f"[NOTIFIER] Notif envoyée pour {game['title']}")
 
 
+def notify_upcoming_game(game: dict):
+    """Notifie d'un jeu qui sera gratuit la semaine prochaine."""
+    embed = _game_embed(game, color=0x7F77DD)
+    embed["title"]  = f"🔜 Bientôt gratuit : {game['title']}"
+    embed["footer"] = {"text": "Epic Games Store • Gratuit la semaine prochaine"}
+    _post(cfg.DISCORD_WEBHOOK, {
+        "content": "🔜 Un jeu sera gratuit la semaine prochaine !",
+        "embeds": [embed],
+    })
+    log.info(f"[NOTIFIER] Notif upcoming envoyée pour {game['title']}")
+
+
 # ── Alertes techniques ───────────────────────────────────────
 
 def alert_api_down():
@@ -74,21 +86,6 @@ def alert_api_down():
             "Aucun jeu n'a été marqué comme vu — la vérification reprendra normalement au prochain run."
         )
     })
-
-
-def send_heartbeat(summary: dict):
-    """Heartbeat hebdomadaire : le bot est vivant + stats."""
-    total = summary["total_notified"]
-    last  = summary.get("last_check", "inconnue")
-
-    lines = [
-        "💚 **Heartbeat hebdomadaire — le bot est vivant !**",
-        "",
-        f"🎮 Jeux notifiés au total : **{total}**",
-        f"\n_Dernier check : {last}_",
-    ]
-    _post(cfg.alert_webhook, {"content": "\n".join(lines)})
-    log.info("[NOTIFIER] Heartbeat envoyé.")
 
 
 # ── Notifications mobile ─────────────────────────────────────

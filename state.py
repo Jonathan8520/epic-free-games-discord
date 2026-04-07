@@ -11,8 +11,7 @@ Structure de state.json :
       "value":       "19.99 €" | null
     }
   },
-  "last_check": "ISO8601",
-  "heartbeat_sent_week": "2024-W03" | null
+  "last_check": "ISO8601"
 }
 """
 
@@ -24,9 +23,6 @@ from logger import log
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
-
-def _week() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-W%W")
 
 
 class State:
@@ -44,7 +40,6 @@ class State:
         return {
             "games": {},
             "last_check": None,
-            "heartbeat_sent_week": None,
         }
 
     def save(self):
@@ -52,8 +47,6 @@ class State:
         with open(self.path, "w") as f:
             json.dump(self._data, f, indent=2, ensure_ascii=False)
         log.debug("state.json sauvegardé.")
-
-    # ── Jeux ────────────────────────────────────────────────
 
     def is_notified(self, game_id: str) -> bool:
         return game_id in self._data["games"]
@@ -64,20 +57,4 @@ class State:
             "url"        : game.get("url", ""),
             "notified_at": _now(),
             "value"      : game.get("original_price"),
-        }
-
-    # ── Heartbeat ───────────────────────────────────────────
-
-    def needs_heartbeat(self) -> bool:
-        return self._data.get("heartbeat_sent_week") != _week()
-
-    def mark_heartbeat(self):
-        self._data["heartbeat_sent_week"] = _week()
-
-    # ── Stats ───────────────────────────────────────────────
-
-    def summary(self) -> dict:
-        return {
-            "total_notified": len(self._data["games"]),
-            "last_check"    : self._data.get("last_check"),
         }
