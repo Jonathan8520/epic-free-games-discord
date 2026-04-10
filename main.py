@@ -51,11 +51,13 @@ def main():
             state.mark_notified(game)
 
     # 4. Jeux à venir → notification "bientôt gratuit"
+    #    Préfixe "upcoming_" pour ne pas bloquer la notif "current" quand il sort
     for game in upcoming_games:
-        if not state.is_notified(game["id"]):
+        upcoming_id = f"upcoming_{game['id']}"
+        if not state.is_notified(upcoming_id):
             log.info(f"Jeu à venir détecté : {game['title']}")
             notify_upcoming_game(game)
-            state.mark_notified(game)
+            state.mark_notified({**game, "id": upcoming_id})
 
     # 5. Jeux à -100% surprise (hors promo hebdo)
     try:
