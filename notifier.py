@@ -83,21 +83,17 @@ def _game_embed(game: dict, color: int = 0x1ED760) -> dict:
 
 def notify_new_game(game: dict):
     """Notifie d'un nouveau jeu gratuit dans le salon principal."""
-    ping    = f"<@&{cfg.ROLE_ID}> " if cfg.ROLE_ID else ""
-    content = f"{ping}🎮 Nouveau jeu gratuit sur Epic Games Store !"
-    _post(cfg.DISCORD_WEBHOOK, {"content": content, "embeds": [_game_embed(game)]})
+    ping = f"<@&{cfg.ROLE_ID}> " if cfg.ROLE_ID else ""
+    _post(cfg.DISCORD_WEBHOOK, {"content": ping or None, "embeds": [_game_embed(game)]})
     log.info(f"[NOTIFIER] Notif envoyée pour {game['title']}")
 
 
 def notify_upcoming_game(game: dict):
     """Notifie d'un jeu qui sera gratuit la semaine prochaine."""
     embed = _game_embed(game, color=0x7F77DD)
-    embed["title"]  = f"🔜 Bientôt gratuit : {game['title']}"
+    embed["title"]  = f"🔜 {game['title']}"
     embed["footer"] = {"text": "Epic Games Store • Gratuit la semaine prochaine"}
-    _post(cfg.DISCORD_WEBHOOK, {
-        "content": "🔜 Un jeu sera gratuit la semaine prochaine !",
-        "embeds": [embed],
-    })
+    _post(cfg.DISCORD_WEBHOOK, {"embeds": [embed]})
     log.info(f"[NOTIFIER] Notif upcoming envoyée pour {game['title']}")
 
 
