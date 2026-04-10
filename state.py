@@ -58,3 +58,6 @@ class State:
             "notified_at": _now(),
             "value"      : game.get("original_price"),
         }
+
+    def remove(self, game_id: str):
+        self._data["games"].pop(game_id, None)

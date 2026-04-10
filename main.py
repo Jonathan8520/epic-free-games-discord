@@ -49,6 +49,8 @@ def main():
             log.info(f"Nouveau jeu détecté : {game['title']}")
             notify_new_game(game)
             state.mark_notified(game)
+            # Nettoie l'entrée upcoming_ si elle existait
+            state.remove(f"upcoming_{game['id']}")
 
     # 4. Jeux à venir → notification "bientôt gratuit"
     #    Préfixe "upcoming_" pour ne pas bloquer la notif "current" quand il sort
