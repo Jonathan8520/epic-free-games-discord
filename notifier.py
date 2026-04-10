@@ -100,13 +100,10 @@ def notify_upcoming_game(game: dict):
 def notify_surprise_game(game: dict):
     """Notifie d'un jeu à -100% surprise (hors promo hebdo Epic)."""
     embed = _game_embed(game, color=0xFFD700)
-    embed["title"]  = f"💎 Surprise gratuite : {game['title']}"
+    embed["title"]  = f"💎 {game['title']}"
     embed["footer"] = {"text": "Epic Games Store • -100% hors promo hebdomadaire"}
     ping = f"<@&{cfg.ROLE_ID}> " if cfg.ROLE_ID else ""
-    _post(cfg.DISCORD_WEBHOOK, {
-        "content": f"{ping}💎 Jeu gratuit surprise détecté !",
-        "embeds": [embed],
-    })
+    _post(cfg.DISCORD_WEBHOOK, {"content": ping or None, "embeds": [embed]})
     log.info(f"[NOTIFIER] Notif surprise envoyée pour {game['title']}")
 
 
