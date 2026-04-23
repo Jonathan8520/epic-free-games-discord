@@ -24,18 +24,24 @@
       "notified_at": "2026-04-09T14:52:37.429229+00:00",
       "value": "26,99 €"
     },
-    "upcoming_9e7d6a034aaf450dacda4b51695d113a": {
-      "title": "DOOMBLADE",
-      "url": "https://store.epicgames.com/fr/p/doomblade-afdf9a",
-      "notified_at": "2026-04-16T15:17:38.987944+00:00",
-      "value": "14,79 €"
-    },
     "upcoming_0623017cf9f341efbe07557f46beb4e8": {
       "title": "Firestone Online Idle RPG",
       "url": "https://store.epicgames.com/fr/p/firestone-online-idle-rpg-bfd04b",
       "notified_at": "2026-04-23T12:58:17.670290+00:00",
       "value": null
+    },
+    "9e7d6a034aaf450dacda4b51695d113a": {
+      "title": "DOOMBLADE",
+      "url": "https://store.epicgames.com/fr/p/doomblade-afdf9a",
+      "notified_at": "2026-04-23T15:11:24.416153+00:00",
+      "value": "14,79 €"
+    },
+    "upcoming_102da1ac6e864d7f84889f2c0a107ee2": {
+      "title": "Oddsparks: An Automation Adventure",
+      "url": "https://store.epicgames.com/fr/p/oddsparks-58440c",
+      "notified_at": "2026-04-23T15:11:24.595728+00:00",
+      "value": "29,99 €"
     }
   },
-  "last_check": "2026-04-23T12:58:18.207403+00:00"
+  "last_check": "2026-04-23T15:11:25.104728+00:00"
 }
