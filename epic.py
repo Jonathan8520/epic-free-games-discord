@@ -123,7 +123,8 @@ def _extract_slug(game: dict) -> str:
 
 def _parse_game(game: dict, status: str) -> dict:
     slugs = _split_slugs_by_platform(game)
-    main_slug = slugs.get("pc") or (next(iter(slugs.values())) if slugs else "")
+    # _extract_slug inclut le fallback productSlug/urlSlug pour les jeux sans catalogNs.mappings
+    main_slug = _extract_slug(game)
     url = (
         f"https://store.epicgames.com/fr/p/{main_slug}"
         if main_slug else "https://store.epicgames.com/fr/free-games"
