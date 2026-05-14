@@ -53,7 +53,31 @@
       "url": "https://store.epicgames.com/fr/p/trash-goblin-cd5fd7",
       "notified_at": "2026-05-07T15:26:46.851540+00:00",
       "value": "17,99 €"
+    },
+    "73a4416d5cdb42f682d504fdf48e987b": {
+      "title": "The Telltale Batman Shadows Edition",
+      "url": "https://store.epicgames.com/fr/free-games",
+      "notified_at": "2026-05-14T23:19:08.973041+00:00",
+      "value": null
+    },
+    "190cb955f17f48dcb8576aa8288c887f": {
+      "title": "Sunderfolk - Standard Edition",
+      "url": "https://store.epicgames.com/fr/free-games",
+      "notified_at": "2026-05-14T23:19:09.167553+00:00",
+      "value": null
+    },
+    "upcoming_cd37ebd7ce804df9b51b84578e631b8a": {
+      "title": "Mystery Game Week 21 Game 2",
+      "url": "https://store.epicgames.com/fr/free-games",
+      "notified_at": "2026-05-14T23:19:09.637294+00:00",
+      "value": null
+    },
+    "upcoming_9e2567e57e61458686d53f5aeaf1e2e0": {
+      "title": "Mystery Game Week 21 Game 1",
+      "url": "https://store.epicgames.com/fr/free-games",
+      "notified_at": "2026-05-14T23:19:09.948285+00:00",
+      "value": null
     }
   },
-  "last_check": null
+  "last_check": "2026-05-14T23:19:11.382855+00:00"
 }
