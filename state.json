@@ -28,7 +28,7 @@
       "title": "DOOMBLADE",
       "url": "https://store.epicgames.com/fr/p/doomblade-afdf9a",
       "notified_at": "2026-04-23T15:11:24.416153+00:00",
-      "value": "14,79 €"
+      "value": "14,79 €"
     },
     "0623017cf9f341efbe07557f46beb4e8": {
       "title": "Firestone Online Idle RPG",
@@ -40,44 +40,20 @@
       "title": "Oddsparks: An Automation Adventure",
       "url": "https://store.epicgames.com/fr/p/oddsparks-58440c",
       "notified_at": "2026-04-30T16:17:19.917793+00:00",
-      "value": "29,99 €"
+      "value": "29,99 €"
     },
     "4fb95c3f11754061b2b1a94e60d848bd": {
       "title": "Arranger: A Role-Puzzling Adventure",
       "url": "https://store.epicgames.com/fr/p/arranger-a-rolepuzzling-adventure-dbfde7",
       "notified_at": "2026-05-07T15:26:46.347758+00:00",
-      "value": "17,99 €"
+      "value": "17,99 €"
     },
     "40980262fdb24c149094f3febfe84cb6": {
       "title": "Trash Goblin",
       "url": "https://store.epicgames.com/fr/p/trash-goblin-cd5fd7",
       "notified_at": "2026-05-07T15:26:46.851540+00:00",
-      "value": "17,99 €"
-    },
-    "73a4416d5cdb42f682d504fdf48e987b": {
-      "title": "The Telltale Batman Shadows Edition",
-      "url": "https://store.epicgames.com/fr/p/the-telltale-batman",
-      "notified_at": "2026-05-14T16:04:01.961779+00:00",
-      "value": null
-    },
-    "190cb955f17f48dcb8576aa8288c887f": {
-      "title": "Sunderfolk - Standard Edition",
-      "url": "https://store.epicgames.com/fr/p/sunderfolk-standard-edition-83c05e",
-      "notified_at": "2026-05-14T16:04:02.203736+00:00",
-      "value": null
-    },
-    "upcoming_cd37ebd7ce804df9b51b84578e631b8a": {
-      "title": "Mystery Game Week 21 Game 2",
-      "url": "https://store.epicgames.com/fr/p/[]",
-      "notified_at": "2026-05-14T16:04:02.492432+00:00",
-      "value": null
-    },
-    "upcoming_9e2567e57e61458686d53f5aeaf1e2e0": {
-      "title": "Mystery Game Week 21 Game 1",
-      "url": "https://store.epicgames.com/fr/p/[]",
-      "notified_at": "2026-05-14T16:04:02.850845+00:00",
-      "value": null
+      "value": "17,99 €"
     }
   },
-  "last_check": "2026-05-14T23:16:34.482522+00:00"
+  "last_check": null
 }
