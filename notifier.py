@@ -61,9 +61,16 @@ def _game_embed(game: dict, color: int = 0x1ED760) -> dict:
                 "inline": True,
             })
 
+    # Lien principal (PC) + liens mobiles si la promo couvre iOS/Android
+    mobile_urls = game.get("mobile_urls") or {}
+    links = [f"💻 [PC]({url})"]
+    if mobile_urls.get("ios"):
+        links.append(f"📱 [iOS]({mobile_urls['ios']})")
+    if mobile_urls.get("android"):
+        links.append(f"🤖 [Android]({mobile_urls['android']})")
     fields.append({
         "name"  : "Récupérer le jeu",
-        "value" : f"[Ouvrir le store Epic]({url})",
+        "value" : " · ".join(links),
         "inline": True,
     })
 

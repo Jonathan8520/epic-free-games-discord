@@ -67,44 +67,74 @@ def _is_free_next(game: dict) -> bool:
     return start > now
 
 
+def _all_page_slugs(game: dict) -> list[str]:
+    """Retourne tous les pageSlug trouvés dans catalogNs/offerMappings."""
+    slugs = []
+    for source in ("catalogNs", "offerMappings"):
+        try:
+            container = game.get(source, {})
+            mappings = container.get("mappings", []) if isinstance(container, dict) else container
+            for m in mappings or []:
+                s = m.get("pageSlug")
+                if s and s not in slugs:
+                    slugs.append(s)
+        except (AttributeError, TypeError):
+            pass
+    return slugs
+
+
+def _classify_slug(slug: str) -> str:
+    """
+    Détermine la plateforme à partir du slug.
+    Les pages mobile ont '-ios-' ou '-android-' avant le hash final.
+    """
+    s = slug.lower()
+    if "-ios-" in s or s.endswith("-ios"):
+        return "ios"
+    if "-android-" in s or s.endswith("-android"):
+        return "android"
+    return "pc"
+
+
+def _split_slugs_by_platform(game: dict) -> dict[str, str]:
+    """
+    Retourne un dict {platform: slug} où platform ∈ {pc, ios, android}.
+    Si plusieurs slugs partagent une plateforme, garde le premier.
+    """
+    result: dict[str, str] = {}
+    for slug in _all_page_slugs(game):
+        plat = _classify_slug(slug)
+        result.setdefault(plat, slug)
+    return result
+
+
 def _extract_slug(game: dict) -> str:
-    """
-    Cherche le vrai slug du produit dans plusieurs champs possibles.
-    Epic met le slug à différents endroits selon le type d'offre.
-    """
-    # 1. catalogNs.mappings[].pageSlug (le plus fiable pour les jeux récents)
-    try:
-        for m in game.get("catalogNs", {}).get("mappings", []) or []:
-            slug = m.get("pageSlug")
-            if slug:
-                return slug
-    except (AttributeError, TypeError):
-        pass
+    """Slug principal — priorité PC, sinon n'importe lequel."""
+    slugs = _split_slugs_by_platform(game)
+    if slugs:
+        return slugs.get("pc") or next(iter(slugs.values()))
 
-    # 2. offerMappings[].pageSlug
-    try:
-        for m in game.get("offerMappings", []) or []:
-            slug = m.get("pageSlug")
-            if slug:
-                return slug
-    except (AttributeError, TypeError):
-        pass
-
-    # 3. productSlug / urlSlug (legacy)
+    # Fallback legacy
     slug = game.get("productSlug") or game.get("urlSlug") or ""
-    # Vire les suffixes type "/home" qu'Epic ajoute parfois
     if slug:
         return slug.split("/")[0]
-
     return ""
 
 
 def _parse_game(game: dict, status: str) -> dict:
-    slug = _extract_slug(game)
-    url  = (
-        f"https://store.epicgames.com/fr/p/{slug}"
-        if slug else "https://store.epicgames.com/fr/free-games"
+    slugs = _split_slugs_by_platform(game)
+    main_slug = slugs.get("pc") or (next(iter(slugs.values())) if slugs else "")
+    url = (
+        f"https://store.epicgames.com/fr/p/{main_slug}"
+        if main_slug else "https://store.epicgames.com/fr/free-games"
     )
+
+    # URLs supplémentaires pour les versions mobile, si elles existent
+    mobile_urls = {}
+    if slugs.get("ios"):
+        mobile_urls["ios"] = f"https://store.epicgames.com/fr/p/{slugs['ios']}"
+    if slugs.get("android"):
+        mobile_urls["android"] = f"https://store.epicgames.com/fr/p/{slugs['android']}"
 
     # Dates de la promo (current ou upcoming selon le statut)
     key = "promotionalOffers" if status == "current" else "upcomingPromotionalOffers"
@@ -116,6 +146,7 @@ def _parse_game(game: dict, status: str) -> dict:
         "title"          : game.get("title", "Jeu inconnu"),
         "description"    : game.get("description", ""),
         "url"            : url,
+        "mobile_urls"    : mobile_urls,
         "image"          : _extract_image(game),
         "original_price" : _extract_price(game),
         "status"         : status,
