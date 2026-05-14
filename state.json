@@ -54,18 +54,30 @@
       "notified_at": "2026-05-07T15:26:46.851540+00:00",
       "value": "17,99 €"
     },
-    "upcoming_73a4416d5cdb42f682d504fdf48e987b": {
-      "title": "Mystery Game 2",
-      "url": "https://store.epicgames.com/fr/p/[]",
-      "notified_at": "2026-05-07T15:26:47.195050+00:00",
+    "73a4416d5cdb42f682d504fdf48e987b": {
+      "title": "The Telltale Batman Shadows Edition",
+      "url": "https://store.epicgames.com/fr/p/the-telltale-batman",
+      "notified_at": "2026-05-14T16:04:01.961779+00:00",
       "value": null
     },
-    "upcoming_190cb955f17f48dcb8576aa8288c887f": {
-      "title": "Mystery Game 1",
+    "190cb955f17f48dcb8576aa8288c887f": {
+      "title": "Sunderfolk - Standard Edition",
+      "url": "https://store.epicgames.com/fr/p/sunderfolk-standard-edition-83c05e",
+      "notified_at": "2026-05-14T16:04:02.203736+00:00",
+      "value": null
+    },
+    "upcoming_cd37ebd7ce804df9b51b84578e631b8a": {
+      "title": "Mystery Game Week 21 Game 2",
       "url": "https://store.epicgames.com/fr/p/[]",
-      "notified_at": "2026-05-07T15:26:47.673235+00:00",
+      "notified_at": "2026-05-14T16:04:02.492432+00:00",
+      "value": null
+    },
+    "upcoming_9e2567e57e61458686d53f5aeaf1e2e0": {
+      "title": "Mystery Game Week 21 Game 1",
+      "url": "https://store.epicgames.com/fr/p/[]",
+      "notified_at": "2026-05-14T16:04:02.850845+00:00",
       "value": null
     }
   },
-  "last_check": "2026-05-14T13:27:35.213342+00:00"
+  "last_check": "2026-05-14T16:04:04.355942+00:00"
 }
