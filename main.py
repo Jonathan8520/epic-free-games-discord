@@ -17,6 +17,9 @@ from mobile import get_epic_mobile_games, get_new_mobile_games
 from notifier import notify_new_game, notify_upcoming_game, notify_surprise_game, notify_mobile_game, alert_api_down
 from scheduler import should_run
 from logger import log
+from auth import auth
+from claimer import claim_game, ClaimResult
+from gh_secrets import update_secret
 
 
 def main():
@@ -43,17 +46,51 @@ def main():
     upcoming_games = [g for g in games if g["status"] == "next"]
     log.info(f"{len(current_games)} actuel(s), {len(upcoming_games)} à venir.")
 
-    # 3. Jeux actuellement gratuits → notification
+    # 3. Surprise -100% (hors promo hebdo) — fetched ici pour que le claim sache quoi traiter
+    surprise: list = []
+    try:
+        weekly_ids = {g["id"] for g in games}
+        surprise   = get_surprise_free_games(exclude_ids=weekly_ids)
+    except Exception as e:
+        log.warning(f"[SURPRISE] Erreur fetch : {e}")
+
+    # 4. Auto-claim (optionnel) — closure pour que les notifs en aval connaissent le statut
+    _claim = {"token": None, "blocked": False}
+    if cfg.can_claim and (current_games or surprise):
+        if auth.refresh(cfg.EPIC_REFRESH_TOKEN):
+            _claim["token"] = auth.access_token
+        else:
+            log.warning("[CLAIM] Refresh token rejeté — vérifier EPIC_REFRESH_TOKEN.")
+
+    def try_claim(game) -> str | None:
+        """Tente le claim, retourne le claim_status pour l'embed Discord (ou None)."""
+        if not _claim["token"] or _claim["blocked"]:
+            return None
+        if not (game.get("namespace") and game.get("id")):
+            return None
+        result, msg = claim_game(_claim["token"], game["namespace"], game["id"], game["title"])
+        if result == ClaimResult.UNAUTHORIZED:
+            log.warning("[CLAIM] Token rejeté en cours de run — claim désactivé.")
+            _claim["blocked"] = True
+            return None
+        if result == ClaimResult.FAILED:
+            log.warning(f"[CLAIM] Échec {game['title']} : {msg}")
+        return {
+            ClaimResult.SUCCESS : "success",
+            ClaimResult.OWNED   : "owned",
+            ClaimResult.NOT_FREE: None,        # garde-fou : pas la peine d'embêter l'user
+        }.get(result, "failed")
+
+    # 5. Jeux actuellement gratuits → claim + notif
     for game in current_games:
         if not state.is_notified(game["id"]):
             log.info(f"Nouveau jeu détecté : {game['title']}")
-            notify_new_game(game)
+            status = try_claim(game)
+            notify_new_game(game, claim_status=status)
             state.mark_notified(game)
-            # Nettoie l'entrée upcoming_ si elle existait
             state.remove(f"upcoming_{game['id']}")
 
-    # 4. Jeux à venir → notification "bientôt gratuit"
-    #    Préfixe "upcoming_" pour ne pas bloquer la notif "current" quand il sort
+    # 6. Jeux à venir → notification "bientôt gratuit" (pas de claim, pas encore dispo)
     for game in upcoming_games:
         upcoming_id = f"upcoming_{game['id']}"
         if not state.is_notified(upcoming_id):
@@ -61,17 +98,17 @@ def main():
             notify_upcoming_game(game)
             state.mark_notified({**game, "id": upcoming_id})
 
-    # 5. Jeux à -100% surprise (hors promo hebdo)
-    try:
-        weekly_ids = {g["id"] for g in games}
-        surprise   = get_surprise_free_games(exclude_ids=weekly_ids)
-        for game in surprise:
-            if not state.is_notified(game["id"]):
-                log.info(f"Surprise gratuite détectée : {game['title']}")
-                notify_surprise_game(game)
-                state.mark_notified(game)
-    except Exception as e:
-        log.warning(f"[SURPRISE] Erreur : {e}")
+    # 7. Surprise -100% → claim + notif
+    for game in surprise:
+        if not state.is_notified(game["id"]):
+            log.info(f"Surprise gratuite détectée : {game['title']}")
+            status = try_claim(game)
+            notify_surprise_game(game, claim_status=status)
+            state.mark_notified(game)
+
+    # 8. Persister le nouveau refresh_token (Epic invalide l'ancien à chaque usage)
+    if _claim["token"] and auth.new_refresh_token and auth.new_refresh_token != cfg.EPIC_REFRESH_TOKEN:
+        update_secret(cfg.GITHUB_REPO, cfg.GH_PAT, "EPIC_REFRESH_TOKEN", auth.new_refresh_token)
 
     # 6. Jeux gratuits mobiles (iOS / Android)
     try:

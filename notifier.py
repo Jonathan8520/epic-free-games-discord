@@ -31,7 +31,15 @@ def _post(webhook_url: str, payload: dict):
         log.error(f"[NOTIFIER] Échec envoi webhook : {e}")
 
 
-def _game_embed(game: dict, color: int = 0x1ED760) -> dict:
+CLAIM_FOOTERS = {
+    "success": "✅ Réclamé automatiquement sur ton compte",
+    "owned"  : "ℹ️ Déjà dans ta bibliothèque",
+    "failed" : "⚠️ Auto-claim échoué — clique pour récupérer",
+}
+
+
+def _game_embed(game: dict, color: int = 0x1ED760, claim_status: str | None = None,
+                default_footer: str = "Epic Games Store • Gratuit cette semaine") -> dict:
     title = game.get("title", "Jeu inconnu")
     url   = game.get("url", "https://store.epicgames.com/fr/free-games")
     image = game.get("image")
@@ -74,12 +82,13 @@ def _game_embed(game: dict, color: int = 0x1ED760) -> dict:
         "inline": True,
     })
 
+    footer_text = CLAIM_FOOTERS.get(claim_status, default_footer)
     embed = {
         "title" : f"🎮 {title}",
         "url"   : url,
         "color" : color,
         "fields": fields,
-        "footer": {"text": "Epic Games Store • Gratuit cette semaine"},
+        "footer": {"text": footer_text},
     }
     if image:
         embed["thumbnail"] = {"url": image}
@@ -88,27 +97,28 @@ def _game_embed(game: dict, color: int = 0x1ED760) -> dict:
 
 # ── Notifications principales ────────────────────────────────
 
-def notify_new_game(game: dict):
+def notify_new_game(game: dict, claim_status: str | None = None):
     """Notifie d'un nouveau jeu gratuit dans le salon principal."""
-    ping = f"<@&{cfg.ROLE_ID}> " if cfg.ROLE_ID else ""
-    _post(cfg.DISCORD_WEBHOOK, {"content": ping or None, "embeds": [_game_embed(game)]})
+    ping  = f"<@&{cfg.ROLE_ID}> " if cfg.ROLE_ID else ""
+    embed = _game_embed(game, claim_status=claim_status)
+    _post(cfg.DISCORD_WEBHOOK, {"content": ping or None, "embeds": [embed]})
     log.info(f"[NOTIFIER] Notif envoyée pour {game['title']}")
 
 
 def notify_upcoming_game(game: dict):
     """Notifie d'un jeu qui sera gratuit la semaine prochaine."""
-    embed = _game_embed(game, color=0x7F77DD)
-    embed["title"]  = f"🔜 {game['title']}"
-    embed["footer"] = {"text": "Epic Games Store • Gratuit la semaine prochaine"}
+    embed = _game_embed(game, color=0x7F77DD,
+                        default_footer="Epic Games Store • Gratuit la semaine prochaine")
+    embed["title"] = f"🔜 {game['title']}"
     _post(cfg.DISCORD_WEBHOOK, {"embeds": [embed]})
     log.info(f"[NOTIFIER] Notif upcoming envoyée pour {game['title']}")
 
 
-def notify_surprise_game(game: dict):
+def notify_surprise_game(game: dict, claim_status: str | None = None):
     """Notifie d'un jeu à -100% surprise (hors promo hebdo Epic)."""
-    embed = _game_embed(game, color=0xFFD700)
-    embed["title"]  = f"💎 {game['title']}"
-    embed["footer"] = {"text": "Epic Games Store • -100% hors promo hebdomadaire"}
+    embed = _game_embed(game, color=0xFFD700, claim_status=claim_status,
+                        default_footer="Epic Games Store • -100% hors promo hebdomadaire")
+    embed["title"] = f"💎 {game['title']}"
     ping = f"<@&{cfg.ROLE_ID}> " if cfg.ROLE_ID else ""
     _post(cfg.DISCORD_WEBHOOK, {"content": ping or None, "embeds": [embed]})
     log.info(f"[NOTIFIER] Notif surprise envoyée pour {game['title']}")
