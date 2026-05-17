@@ -1,1 +1,29 @@
-{"games": {}, "last_check": null}
+{
+  "games": {
+    "73a4416d5cdb42f682d504fdf48e987b": {
+      "title": "The Telltale Batman Shadows Edition",
+      "url": "https://store.epicgames.com/fr/p/the-telltale-batman",
+      "notified_at": "2026-05-17T14:44:55.892325+00:00",
+      "value": null
+    },
+    "190cb955f17f48dcb8576aa8288c887f": {
+      "title": "Sunderfolk - Standard Edition",
+      "url": "https://store.epicgames.com/fr/p/sunderfolk-standard-edition-83c05e",
+      "notified_at": "2026-05-17T14:44:56.529593+00:00",
+      "value": null
+    },
+    "upcoming_cd37ebd7ce804df9b51b84578e631b8a": {
+      "title": "Mystery Game Week 21 Game 2",
+      "url": "https://store.epicgames.com/fr/p/[]",
+      "notified_at": "2026-05-17T14:44:56.745367+00:00",
+      "value": null
+    },
+    "upcoming_9e2567e57e61458686d53f5aeaf1e2e0": {
+      "title": "Mystery Game Week 21 Game 1",
+      "url": "https://store.epicgames.com/fr/p/[]",
+      "notified_at": "2026-05-17T14:44:56.988304+00:00",
+      "value": null
+    }
+  },
+  "last_check": "2026-05-17T14:44:57.272467+00:00"
+}
