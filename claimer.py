@@ -37,6 +37,7 @@ class ClaimResult:
     FAILED       = "failed"
     UNAUTHORIZED = "unauthorized"   # access_token périmé ou rejeté
     NOT_FREE     = "not_free"       # Garde-fou : offer pas à 0€ au moment du claim
+    INELIGIBLE   = "ineligible"     # Epic refuse quickPurchase (typique BASE_GAME hebdo)
 
 
 def _is_free(namespace: str, offer_id: str) -> bool:
@@ -102,6 +103,12 @@ def claim_game(access_token: str, namespace: str, offer_id: str, title: str = "?
     if resp.status_code in (401, 403):
         return ClaimResult.UNAUTHORIZED, f"HTTP {resp.status_code}"
 
+    # HTTP 400 "Offer is not eligible for quickPurchase" — Epic refuse l'auto-claim
+    # pour cette offer. Cas typique des BASE_GAME en promo hebdo (claim manuel requis).
+    if resp.status_code == 400 and "not eligible" in resp.text.lower():
+        log.info(f"[CLAIM] ⚠️  {title} : non éligible quickPurchase (claim manuel requis).")
+        return ClaimResult.INELIGIBLE, "Not eligible for quickPurchase"
+
     if resp.status_code != 200:
         return ClaimResult.FAILED, f"HTTP {resp.status_code} : {resp.text[:200]}"
 
@@ -117,6 +124,12 @@ def claim_game(access_token: str, namespace: str, offer_id: str, title: str = "?
     if status == "REACHED_PURCHASE_LIMIT":
         log.info(f"[CLAIM] ℹ️  {title} déjà possédé.")
         return ClaimResult.OWNED, ""
+
+    # CHECKOUT : Epic veut un flow web. Observé sur les BASE_GAME hebdo depuis
+    # les runners GH Actions (au lieu du 400 "not eligible" en IP résidentielle).
+    if status == "CHECKOUT":
+        log.info(f"[CLAIM] ⚠️  {title} : flow CHECKOUT requis (claim manuel).")
+        return ClaimResult.INELIGIBLE, "Status CHECKOUT — claim manuel"
 
     body = resp.text.lower()
     if "eula" in body or "agreement" in body:
