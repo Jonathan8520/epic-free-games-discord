@@ -56,7 +56,14 @@ def main():
 
     # 4. Auto-claim (optionnel) — closure pour que les notifs en aval connaissent le statut
     _claim = {"token": None, "blocked": False}
-    if cfg.can_claim and (current_games or surprise):
+    if not cfg.can_claim:
+        log.info(
+            f"[CLAIM] Désactivé — AUTO_CLAIM={cfg.AUTO_CLAIM} "
+            f"EPIC_REFRESH_TOKEN={'set' if cfg.EPIC_REFRESH_TOKEN else 'MISSING'} "
+            f"GH_PAT={'set' if cfg.GH_PAT else 'MISSING'} "
+            f"GITHUB_REPO={cfg.GITHUB_REPO or 'MISSING'}"
+        )
+    elif current_games or surprise:
         if auth.refresh(cfg.EPIC_REFRESH_TOKEN):
             _claim["token"] = auth.access_token
         else:
