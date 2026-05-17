@@ -83,9 +83,10 @@ def main():
         if result == ClaimResult.FAILED:
             log.warning(f"[CLAIM] Échec {game['title']} : {msg}")
         return {
-            ClaimResult.SUCCESS : "success",
-            ClaimResult.OWNED   : "owned",
-            ClaimResult.NOT_FREE: None,        # garde-fou : pas la peine d'embêter l'user
+            ClaimResult.SUCCESS   : "success",
+            ClaimResult.OWNED     : "owned",
+            ClaimResult.NOT_FREE  : None,      # garde-fou prix : pas la peine d'embêter l'user
+            ClaimResult.INELIGIBLE: None,      # Epic refuse quickPurchase (BASE_GAME hebdo) → footer normal
         }.get(result, "failed")
 
     # 5. Jeux actuellement gratuits → claim + notif
