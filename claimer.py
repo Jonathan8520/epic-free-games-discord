@@ -23,15 +23,10 @@ query getOfferPrice($namespace: String!, $offerId: String!) {
 }
 """
 
-ENTITLEMENT_QUERY = """
-query getOffersValidation($offers: [OfferToValidateInput!]!) {
-  Entitlements {
-    cartOffersValidation(offers: $offers) {
-      fullyOwnedOffers { namespace offerId }
-    }
-  }
-}
-"""
+# Persisted query hash utilisé par le frontend store.epicgames.com pour getOffersValidation.
+# Plus simple que d'envoyer la query inline (le type d'input cause HTTP 500).
+# Si Epic change la shape de la query, ce hash deviendra invalide → fallback safe (None).
+ENTITLEMENT_PERSISTED_HASH = "3c9bb0f213f6d0cb6bf056e6b206ba166c8dd59d014618e4d59bff11689f403a"
 
 UA = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -52,15 +47,16 @@ class ClaimResult:
 
 def _is_owned(access_token: str, namespace: str, offer_id: str) -> bool | None:
     """
-    Vérifie si l'offer est déjà dans la lib du compte via GraphQL Epic.
+    Vérifie si l'offer est déjà dans la lib du compte via la persistedQuery `getOffersValidation`.
     Retourne True/False, ou None si la requête échoue (le caller continue alors le flow normal).
     """
     try:
         r = requests.post(
             GRAPHQL_URL,
             json={
-                "query": ENTITLEMENT_QUERY,
-                "variables": {"offers": [{"offerId": offer_id, "namespace": namespace}]},
+                "operationName": "getOffersValidation",
+                "variables"    : {"offers": [{"offerId": offer_id, "namespace": namespace}]},
+                "extensions"   : {"persistedQuery": {"version": 1, "sha256Hash": ENTITLEMENT_PERSISTED_HASH}},
             },
             headers={
                 "Authorization": f"Bearer {access_token}",
@@ -70,8 +66,11 @@ def _is_owned(access_token: str, namespace: str, offer_id: str) -> bool | None:
             timeout=10,
         )
         r.raise_for_status()
-        data    = r.json()
-        owned   = ((data.get("data") or {}).get("Entitlements") or {}).get("cartOffersValidation", {}).get("fullyOwnedOffers") or []
+        data = r.json()
+        if "errors" in data:
+            log.warning(f"[CLAIM] Entitlement query errors : {data['errors']}")
+            return None
+        owned = ((data.get("data") or {}).get("Entitlements") or {}).get("cartOffersValidation", {}).get("fullyOwnedOffers") or []
     except (requests.RequestException, ValueError) as e:
         log.warning(f"[CLAIM] Check entitlement échoué ({e}) — on tente le claim quand même.")
         return None
