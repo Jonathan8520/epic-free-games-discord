@@ -168,19 +168,14 @@ def resolve_slug(slug_or_url: str) -> tuple[str, str]:
         return sub.get("offerId") if isinstance(sub, dict) else None
 
     target = next((m for m in all_mappings if m.get("pageSlug") == slug and _offer(m)), None)
-
-    # Fallback : premier offerId trouve (cas productHome sans offer direct)
-    if not target:
-        target = next((m for m in all_mappings if _offer(m)), None)
-        if target:
-            print(f"[MAPPING] Fallback : slug {slug} sans offer direct, utilise {target['pageSlug']}")
-
     offer_id = _offer(target) if target else None
     if offer_id:
         return namespace, offer_id
 
-    # Fallback : query catalogOffers pour lister directement les offers du sandbox
-    print(f"[MAPPING] Aucun offerId dans catalogNs.mappings, fallback sur catalogOffers")
+    # Pas de match exact (cas productHome comme "valorant" ou "fall-guys") :
+    # on bascule direct sur catalogOffers pour récupérer le BASE_GAME gratuit du sandbox.
+    # On NE prend PAS un sub-mapping random (risque d'attraper un DLC payant / expiré).
+    print(f"[MAPPING] {slug} sans offer direct (probablement productHome) — fallback catalogOffers")
     offers_data = _gql(
         CATALOG_OFFERS_QUERY,
         {"namespace": namespace},
