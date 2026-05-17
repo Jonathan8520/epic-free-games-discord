@@ -23,6 +23,16 @@ query getOfferPrice($namespace: String!, $offerId: String!) {
 }
 """
 
+ENTITLEMENT_QUERY = """
+query getOffersValidation($offers: [OfferToValidateInput!]!) {
+  Entitlements {
+    cartOffersValidation(offers: $offers) {
+      fullyOwnedOffers { namespace offerId }
+    }
+  }
+}
+"""
+
 UA = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
     "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -38,6 +48,34 @@ class ClaimResult:
     UNAUTHORIZED = "unauthorized"   # access_token périmé ou rejeté
     NOT_FREE     = "not_free"       # Garde-fou : offer pas à 0€ au moment du claim
     INELIGIBLE   = "ineligible"     # Epic refuse quickPurchase (typique BASE_GAME hebdo)
+
+
+def _is_owned(access_token: str, namespace: str, offer_id: str) -> bool | None:
+    """
+    Vérifie si l'offer est déjà dans la lib du compte via GraphQL Epic.
+    Retourne True/False, ou None si la requête échoue (le caller continue alors le flow normal).
+    """
+    try:
+        r = requests.post(
+            GRAPHQL_URL,
+            json={
+                "query": ENTITLEMENT_QUERY,
+                "variables": {"offers": [{"offerId": offer_id, "namespace": namespace}]},
+            },
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type" : "application/json",
+                "User-Agent"   : UA,
+            },
+            timeout=10,
+        )
+        r.raise_for_status()
+        data    = r.json()
+        owned   = ((data.get("data") or {}).get("Entitlements") or {}).get("cartOffersValidation", {}).get("fullyOwnedOffers") or []
+    except (requests.RequestException, ValueError) as e:
+        log.warning(f"[CLAIM] Check entitlement échoué ({e}) — on tente le claim quand même.")
+        return None
+    return any(o.get("offerId") == offer_id and o.get("namespace") == namespace for o in owned)
 
 
 def _is_free(namespace: str, offer_id: str) -> bool:
@@ -72,6 +110,12 @@ def claim_game(access_token: str, namespace: str, offer_id: str, title: str = "?
     """
     if not (access_token and namespace and offer_id):
         return ClaimResult.FAILED, "Paramètres manquants"
+
+    # Vérif entitlement : si déjà dans la lib, pas la peine de tenter le claim
+    # (résout l'ambiguïté "not eligible" vs "CHECKOUT" qui ne disent pas "owned")
+    if _is_owned(access_token, namespace, offer_id):
+        log.info(f"[CLAIM] ℹ️  {title} déjà dans la lib (entitlement check).")
+        return ClaimResult.OWNED, ""
 
     if not _is_free(namespace, offer_id):
         log.warning(f"[CLAIM] {title} : garde-fou prix — claim refusé.")
