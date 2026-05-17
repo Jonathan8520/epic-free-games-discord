@@ -33,10 +33,13 @@ jobs:
 
       - name: Run bot
         env:
-          DISCORD_WEBHOOK  : ${{ secrets.DISCORD_WEBHOOK }}
-          ALERT_WEBHOOK    : ${{ secrets.ALERT_WEBHOOK }}
-          ROLE_ID          : ${{ secrets.ROLE_ID }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
+          DISCORD_WEBHOOK   : ${{ secrets.DISCORD_WEBHOOK }}
+          ALERT_WEBHOOK     : ${{ secrets.ALERT_WEBHOOK }}
+          ROLE_ID           : ${{ secrets.ROLE_ID }}
+          GITHUB_REPOSITORY : ${{ github.repository }}
+          AUTO_CLAIM        : ${{ vars.AUTO_CLAIM }}
+          EPIC_REFRESH_TOKEN: ${{ secrets.EPIC_REFRESH_TOKEN }}
+          GH_PAT            : ${{ secrets.GH_PAT }}
         run: python main.py
 
       - name: Push state.json to datas branch
