@@ -34,6 +34,7 @@ def _post(webhook_url: str, payload: dict):
 CLAIM_FOOTERS = {
     "success": "✅ Réclamé automatiquement sur ton compte",
     "owned"  : "ℹ️ Déjà dans ta bibliothèque",
+    "captcha": "⚠️ Captcha Epic — clique sur le lien pour récupérer",
     "failed" : "⚠️ Auto-claim échoué — clique pour récupérer",
 }
 

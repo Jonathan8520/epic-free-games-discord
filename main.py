@@ -17,8 +17,7 @@ from mobile import get_epic_mobile_games, get_new_mobile_games
 from notifier import notify_new_game, notify_upcoming_game, notify_surprise_game, notify_mobile_game, alert_api_down
 from scheduler import should_run
 from logger import log
-from auth import auth
-from claimer import claim_game, ClaimResult
+from claim_browser import Claimer, ClaimOutcome
 from gh_secrets import update_secret
 
 
@@ -54,40 +53,46 @@ def main():
     except Exception as e:
         log.warning(f"[SURPRISE] Erreur fetch : {e}")
 
-    # 4. Auto-claim (optionnel) — closure pour que les notifs en aval connaissent le statut
-    _claim = {"token": None, "blocked": False}
+    # 4. Auto-claim via Playwright (DOM clicks) — voir reference_autoclaim_endpoint.
+    claimer: Claimer | None = None
+    claim_blocked = False
+    new_games_to_process = [g for g in current_games if not state.is_notified(g["id"])]
+    surprise_to_process  = [g for g in surprise if not state.is_notified(g["id"])]
+
     if not cfg.can_claim:
         log.info(
             f"[CLAIM] Désactivé — AUTO_CLAIM={cfg.AUTO_CLAIM} "
-            f"EPIC_REFRESH_TOKEN={'set' if cfg.EPIC_REFRESH_TOKEN else 'MISSING'} "
+            f"EPIC_STORAGE_STATE_B64={'set' if cfg.EPIC_STORAGE_STATE_B64 else 'MISSING'} "
             f"GH_PAT={'set' if cfg.GH_PAT else 'MISSING'} "
             f"GITHUB_REPO={cfg.GITHUB_REPO or 'MISSING'}"
         )
-    elif current_games or surprise:
-        if auth.refresh(cfg.EPIC_REFRESH_TOKEN):
-            _claim["token"] = auth.access_token
-        else:
-            log.warning("[CLAIM] Refresh token rejeté — vérifier EPIC_REFRESH_TOKEN.")
+    elif new_games_to_process or surprise_to_process:
+        try:
+            claimer = Claimer().__enter__()
+        except Exception as e:
+            log.warning(f"[CLAIM] Init browser échoué ({e}) — claim désactivé pour ce run.")
+            claimer = None
 
     def try_claim(game) -> str | None:
-        """Tente le claim, retourne le claim_status pour l'embed Discord (ou None)."""
-        if not _claim["token"] or _claim["blocked"]:
+        nonlocal claim_blocked
+        if not claimer or claim_blocked:
             return None
-        if not (game.get("namespace") and game.get("id")):
+        slug_or_url = game.get("url") or ""
+        if not slug_or_url:
             return None
-        result, msg = claim_game(_claim["token"], game["namespace"], game["id"], game["title"])
-        if result == ClaimResult.UNAUTHORIZED:
-            log.warning("[CLAIM] Token rejeté en cours de run — claim désactivé.")
-            _claim["blocked"] = True
-            return None
-        if result == ClaimResult.FAILED:
-            log.warning(f"[CLAIM] Échec {game['title']} : {msg}")
+        outcome, msg = claimer.claim(slug_or_url)
+        log.info(f"[CLAIM] {game['title']} → {outcome}" + (f" ({msg})" if msg else ""))
+        if outcome == ClaimOutcome.CAPTCHA:
+            # On bloque les claims suivants ce run — pas la peine d'insister
+            log.warning("[CLAIM] hCaptcha actif — claims suivants désactivés.")
+            claim_blocked = True
+            return "captcha"
         return {
-            ClaimResult.SUCCESS   : "success",
-            ClaimResult.OWNED     : "owned",
-            ClaimResult.NOT_FREE  : None,      # garde-fou prix : pas la peine d'embêter l'user
-            ClaimResult.INELIGIBLE: "owned",   # Epic refuse → quasi-toujours "déjà claim" en pratique
-        }.get(result, "failed")
+            ClaimOutcome.SUCCESS: "success",
+            ClaimOutcome.OWNED  : "owned",
+            ClaimOutcome.TIMEOUT: "failed",
+            ClaimOutcome.FAILED : "failed",
+        }.get(outcome, "failed")
 
     # 5. Jeux actuellement gratuits → claim + notif
     for game in current_games:
@@ -114,9 +119,14 @@ def main():
             notify_surprise_game(game, claim_status=status)
             state.mark_notified(game)
 
-    # 8. Persister le nouveau refresh_token (Epic invalide l'ancien à chaque usage)
-    if _claim["token"] and auth.new_refresh_token and auth.new_refresh_token != cfg.EPIC_REFRESH_TOKEN:
-        update_secret(cfg.GITHUB_REPO, cfg.GH_PAT, "EPIC_REFRESH_TOKEN", auth.new_refresh_token)
+    # 8. Fermer le browser et persister le storage_state mis à jour
+    if claimer:
+        try:
+            claimer.__exit__(None, None, None)
+        except Exception as e:
+            log.warning(f"[CLAIM] Fermeture browser : {e}")
+        if claimer.new_storage_state_b64 and claimer.new_storage_state_b64 != cfg.EPIC_STORAGE_STATE_B64:
+            update_secret(cfg.GITHUB_REPO, cfg.GH_PAT, "EPIC_STORAGE_STATE_B64", claimer.new_storage_state_b64)
 
     # 6. Jeux gratuits mobiles (iOS / Android)
     try:
