@@ -1,0 +1,51 @@
+name: Test Claim (debug)
+
+on:
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: "Slug du jeu à tester (ex: tomb-raider-iiii-remastered-538640)"
+        required: true
+        default: "tomb-raider-iiii-remastered-538640"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - run: pip install -r requirements.txt
+
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
+
+      - name: Install Chromium
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: python -m playwright install --with-deps chromium
+
+      - name: Install Chromium deps (cache hit)
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: python -m playwright install-deps chromium
+
+      - name: Run claim_browser
+        env:
+          EPIC_STORAGE_STATE_B64: ${{ secrets.EPIC_STORAGE_STATE_B64 }}
+          DEBUG_CLAIM: "1"
+        run: python claim_browser.py "${{ inputs.slug }}"
+
+      - name: Upload debug screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-screenshots
+          path: debug_*.png
+          if-no-files-found: ignore
