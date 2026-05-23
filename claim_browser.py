@@ -122,9 +122,11 @@ class Claimer:
         )
 
         if b64:
-            # Mode CI / prod : storage_state depuis base64 → fichier temp
+            # Mode CI / prod : storage_state depuis base64 → fichier temp.
+            # Strip espaces/BOM/newlines (peut être pollué par l'encoding du shell qui a set le secret)
+            b64_clean = b64.strip().lstrip("﻿").replace("\r", "").replace("\n", "")
             self._state_tmp = Path(tempfile.mkdtemp()) / "epic_storage_state.json"
-            self._state_tmp.write_bytes(base64.b64decode(b64))
+            self._state_tmp.write_bytes(base64.b64decode(b64_clean, validate=False))
             browser = self._pw.chromium.launch(headless=True, args=launch_args)
             self._context = browser.new_context(storage_state=str(self._state_tmp), **context_kwargs)
             self._browser = browser
