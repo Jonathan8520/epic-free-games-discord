@@ -31,16 +31,39 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
+
+      - name: Install Chromium for Playwright
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: python -m playwright install --with-deps chromium
+
+      - name: Install Chromium system deps (cache hit case)
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: python -m playwright install-deps chromium
+
       - name: Run bot
         env:
-          DISCORD_WEBHOOK   : ${{ secrets.DISCORD_WEBHOOK }}
-          ALERT_WEBHOOK     : ${{ secrets.ALERT_WEBHOOK }}
-          ROLE_ID           : ${{ secrets.ROLE_ID }}
-          GITHUB_REPOSITORY : ${{ github.repository }}
-          AUTO_CLAIM        : ${{ vars.AUTO_CLAIM }}
-          EPIC_REFRESH_TOKEN: ${{ secrets.EPIC_REFRESH_TOKEN }}
-          GH_PAT            : ${{ secrets.GH_PAT }}
+          DISCORD_WEBHOOK       : ${{ secrets.DISCORD_WEBHOOK }}
+          ALERT_WEBHOOK         : ${{ secrets.ALERT_WEBHOOK }}
+          ROLE_ID               : ${{ secrets.ROLE_ID }}
+          GITHUB_REPOSITORY     : ${{ github.repository }}
+          AUTO_CLAIM            : ${{ vars.AUTO_CLAIM }}
+          EPIC_STORAGE_STATE_B64: ${{ secrets.EPIC_STORAGE_STATE_B64 }}
+          GH_PAT                : ${{ secrets.GH_PAT }}
         run: python main.py
+
+      - name: Upload debug screenshots (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-screenshots
+          path: debug_*.png
+          if-no-files-found: ignore
 
       - name: Push state.json to datas branch
         run: |

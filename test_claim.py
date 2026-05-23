@@ -23,8 +23,30 @@ import re
 import sys
 import base64
 import json
+from pathlib import Path
 import requests
+import urllib3
 from pprint import pprint
+from dotenv import load_dotenv, set_key
+
+# Ce poste a un MITM proxy/AV qui casse la verif SSL Python (curl idem cassé).
+# On désactive la verif pour ce script de test uniquement — production marche
+# car les runners GH Actions n'ont pas ce problème.
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+_orig_request = requests.Session.request
+def _patched_request(self, *args, **kwargs):
+    kwargs.setdefault("verify", False)
+    return _orig_request(self, *args, **kwargs)
+requests.Session.request = _patched_request
+
+ENV_FILE = Path(__file__).parent / ".env"
+load_dotenv(ENV_FILE)
+
+
+def _save_refresh_token(rt: str) -> None:
+    """Écrit / met à jour EPIC_REFRESH_TOKEN dans .env (préserve les autres clés)."""
+    ENV_FILE.touch(exist_ok=True)
+    set_key(str(ENV_FILE), "EPIC_REFRESH_TOKEN", rt, quote_mode="never")
 
 CLIENT_ID     = "34a02cf8f4414e29b15921876da36f9a"
 CLIENT_SECRET = "daafbccc737745039dffe53d94fc76cf"
@@ -314,13 +336,13 @@ def main():
             print("Usage: python test_claim.py --bootstrap <authorizationCode>")
             sys.exit(1)
         data = exchange_auth_code(args[1])
-        print("\n=== TOKENS ===")
+        rt = data.get("refresh_token") or ""
+        _save_refresh_token(rt)
+        print("\n=== BOOTSTRAP OK ===")
         print(f"displayName  : {data.get('displayName')}")
         print(f"account_id   : {data.get('account_id')}")
-        print(f"refresh_token: {data.get('refresh_token')}")
         print(f"expires_at   : {data.get('refresh_expires_at')}")
-        print("\nSauvegarde le refresh_token :")
-        print('  $env:EPIC_REFRESH_TOKEN = "..."')
+        print(f"refresh_token sauvé dans {ENV_FILE.name} (gitignored, non affiché)")
         return
 
     # Mode manuel : python test_claim.py --manual <namespace> <offer_id>
@@ -335,7 +357,7 @@ def main():
 
     rt = os.environ.get("EPIC_REFRESH_TOKEN", "")
     if not rt:
-        print("EPIC_REFRESH_TOKEN manquant.")
+        print(f"Aucun EPIC_REFRESH_TOKEN (ni dans {ENV_FILE.name} ni dans l'env).")
         print("1. Va sur :")
         print(f"   https://www.epicgames.com/id/api/redirect?clientId={CLIENT_ID}&responseType=code")
         print('2. Copie la valeur "authorizationCode" du JSON.')
@@ -345,6 +367,10 @@ def main():
     tokens     = refresh_access_token(rt)
     access     = tokens["access_token"]
     account_id = tokens.get("account_id", "")
+    new_rt     = tokens.get("refresh_token")
+    if new_rt and new_rt != rt:
+        _save_refresh_token(new_rt)
+        print(f"[AUTH] Refresh token roté, sauvé dans {ENV_FILE.name}")
     print(f"[AUTH] OK - account_id={account_id}  display={tokens.get('displayName')}")
 
     if manual:

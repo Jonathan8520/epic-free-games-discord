@@ -2,3 +2,7 @@ __pycache__/
 *.pyc
 .venv/
 state.json
+.env
+epic_storage_state.json
+.pw_profile/
+debug_*.png
