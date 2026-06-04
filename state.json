@@ -24,18 +24,6 @@
       "notified_at": "2026-05-21T16:33:28.718893+00:00",
       "value": null
     },
-    "upcoming_a6a2d59fa54946dbbf16f14730c2e5f0": {
-      "title": "Mystery Game Week 23 Game 2",
-      "url": "https://store.epicgames.com/fr/p/[]",
-      "notified_at": "2026-05-28T14:27:50.929899+00:00",
-      "value": null
-    },
-    "upcoming_62b6d302e2bd41039449b1f2f9608748": {
-      "title": "Mystery Game Week 23 Game 1",
-      "url": "https://store.epicgames.com/fr/p/[]",
-      "notified_at": "2026-05-28T14:27:51.199163+00:00",
-      "value": null
-    },
     "9621cc6e5d32437ca3dd998de177f6da": {
       "title": "LONESTAR",
       "url": "https://store.epicgames.com/fr/p/lonestar-83f143",
@@ -47,7 +35,31 @@
       "url": "https://store.epicgames.com/fr/p/calico",
       "notified_at": "2026-05-28T17:55:55.905066+00:00",
       "value": null
+    },
+    "a6a2d59fa54946dbbf16f14730c2e5f0": {
+      "title": "Rogue Waters",
+      "url": "https://store.epicgames.com/fr/p/rogue-waters-9764d6",
+      "notified_at": "2026-06-04T16:16:55.569004+00:00",
+      "value": null
+    },
+    "62b6d302e2bd41039449b1f2f9608748": {
+      "title": "Songs of Conquest",
+      "url": "https://store.epicgames.com/fr/p/songs-of-conquest",
+      "notified_at": "2026-06-04T16:17:08.995991+00:00",
+      "value": null
+    },
+    "upcoming_7f0ab2828f9743d0abc6612a11222fdf": {
+      "title": "The Ouroboros King",
+      "url": "https://store.epicgames.com/fr/p/the-ouroboros-king-e1d547",
+      "notified_at": "2026-06-04T16:17:09.451342+00:00",
+      "value": "8,99 €"
+    },
+    "upcoming_eb6ae87e73d94d2c96bab3c4da4dd3de": {
+      "title": "Warhammer 40K Speed Freeks",
+      "url": "https://store.epicgames.com/fr/p/warhammer-40k-speed-freeks-12879c",
+      "notified_at": "2026-06-04T16:17:09.703257+00:00",
+      "value": "17,99 €"
     }
   },
-  "last_check": "2026-06-04T12:37:37.415795+00:00"
+  "last_check": "2026-06-04T16:17:11.211852+00:00"
 }
