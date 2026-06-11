@@ -48,18 +48,6 @@
       "notified_at": "2026-06-04T16:17:08.995991+00:00",
       "value": null
     },
-    "upcoming_7f0ab2828f9743d0abc6612a11222fdf": {
-      "title": "The Ouroboros King",
-      "url": "https://store.epicgames.com/fr/p/the-ouroboros-king-e1d547",
-      "notified_at": "2026-06-04T16:17:09.451342+00:00",
-      "value": "8,99 €"
-    },
-    "upcoming_eb6ae87e73d94d2c96bab3c4da4dd3de": {
-      "title": "Warhammer 40K Speed Freeks",
-      "url": "https://store.epicgames.com/fr/p/warhammer-40k-speed-freeks-12879c",
-      "notified_at": "2026-06-04T16:17:09.703257+00:00",
-      "value": "17,99 €"
-    },
     "upcoming_ea365d314ecf4224a5f58d2d7430e7aa": {
       "title": "Citizen Sleeper",
       "url": "https://store.epicgames.com/fr/p/citizen-sleeper-944858",
@@ -71,7 +59,19 @@
       "url": "https://store.epicgames.com/fr/p/robobeat-5f084b",
       "notified_at": "2026-06-10T10:52:06.817107+00:00",
       "value": "19,49 €"
+    },
+    "7f0ab2828f9743d0abc6612a11222fdf": {
+      "title": "The Ouroboros King",
+      "url": "https://store.epicgames.com/fr/p/the-ouroboros-king-e1d547",
+      "notified_at": "2026-06-11T18:01:09.634435+00:00",
+      "value": "8,99 €"
+    },
+    "eb6ae87e73d94d2c96bab3c4da4dd3de": {
+      "title": "Warhammer 40K Speed Freeks",
+      "url": "https://store.epicgames.com/fr/p/warhammer-40k-speed-freeks-12879c",
+      "notified_at": "2026-06-11T18:01:22.956227+00:00",
+      "value": "17,99 €"
     }
   },
-  "last_check": "2026-06-11T14:28:31.713950+00:00"
+  "last_check": "2026-06-11T18:01:23.775190+00:00"
 }
