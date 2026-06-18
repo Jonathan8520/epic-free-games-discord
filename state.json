@@ -48,18 +48,6 @@
       "notified_at": "2026-06-04T16:17:08.995991+00:00",
       "value": null
     },
-    "upcoming_ea365d314ecf4224a5f58d2d7430e7aa": {
-      "title": "Citizen Sleeper",
-      "url": "https://store.epicgames.com/fr/p/citizen-sleeper-944858",
-      "notified_at": "2026-06-10T10:52:06.598908+00:00",
-      "value": "17,99 €"
-    },
-    "upcoming_aee7ec395d054078a48d867849e2a550": {
-      "title": "ROBOBEAT",
-      "url": "https://store.epicgames.com/fr/p/robobeat-5f084b",
-      "notified_at": "2026-06-10T10:52:06.817107+00:00",
-      "value": "19,49 €"
-    },
     "7f0ab2828f9743d0abc6612a11222fdf": {
       "title": "The Ouroboros King",
       "url": "https://store.epicgames.com/fr/p/the-ouroboros-king-e1d547",
@@ -83,7 +71,19 @@
       "url": "https://store.epicgames.com/fr/p/rollercoaster-tycoon-3-complete-edition",
       "notified_at": "2026-06-18T14:43:47.404364+00:00",
       "value": "19,99 €"
+    },
+    "ea365d314ecf4224a5f58d2d7430e7aa": {
+      "title": "Citizen Sleeper",
+      "url": "https://store.epicgames.com/fr/p/citizen-sleeper-944858",
+      "notified_at": "2026-06-18T17:55:57.993374+00:00",
+      "value": "17,99 €"
+    },
+    "aee7ec395d054078a48d867849e2a550": {
+      "title": "ROBOBEAT",
+      "url": "https://store.epicgames.com/fr/p/robobeat-5f084b",
+      "notified_at": "2026-06-18T17:56:11.297469+00:00",
+      "value": "19,49 €"
     }
   },
-  "last_check": "2026-06-18T14:43:47.810033+00:00"
+  "last_check": "2026-06-18T17:56:12.245868+00:00"
 }
