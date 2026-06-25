@@ -60,18 +60,6 @@
       "notified_at": "2026-06-11T18:01:22.956227+00:00",
       "value": "17,99 €"
     },
-    "upcoming_bbccf66ad70e492d812e031e17f93b9d": {
-      "title": "Voidwrought",
-      "url": "https://store.epicgames.com/fr/p/voidwrought-ce8f4b",
-      "notified_at": "2026-06-17T14:22:38.683335+00:00",
-      "value": "17,99 €"
-    },
-    "upcoming_4ec50a302f1449b3bf706a199c333ab8": {
-      "title": "RollerCoaster Tycoon 3 Complete Edition",
-      "url": "https://store.epicgames.com/fr/p/rollercoaster-tycoon-3-complete-edition",
-      "notified_at": "2026-06-18T14:43:47.404364+00:00",
-      "value": "19,99 €"
-    },
     "ea365d314ecf4224a5f58d2d7430e7aa": {
       "title": "Citizen Sleeper",
       "url": "https://store.epicgames.com/fr/p/citizen-sleeper-944858",
@@ -83,7 +71,31 @@
       "url": "https://store.epicgames.com/fr/p/robobeat-5f084b",
       "notified_at": "2026-06-18T17:56:11.297469+00:00",
       "value": "19,49 €"
+    },
+    "4ec50a302f1449b3bf706a199c333ab8": {
+      "title": "RollerCoaster Tycoon 3 Complete Edition",
+      "url": "https://store.epicgames.com/fr/p/rollercoaster-tycoon-3-complete-edition",
+      "notified_at": "2026-06-25T16:14:35.466946+00:00",
+      "value": "19,99 €"
+    },
+    "bbccf66ad70e492d812e031e17f93b9d": {
+      "title": "Voidwrought",
+      "url": "https://store.epicgames.com/fr/p/voidwrought-ce8f4b",
+      "notified_at": "2026-06-25T16:14:48.758513+00:00",
+      "value": "17,99 €"
+    },
+    "upcoming_9bf3d3188d1e498095bc23c0955538d9": {
+      "title": "River City Girls 2",
+      "url": "https://store.epicgames.com/fr/p/river-city-girls-2-77af3a",
+      "notified_at": "2026-06-25T16:14:48.957341+00:00",
+      "value": "35,99 €"
+    },
+    "upcoming_4ef54d5829b04656902dfa1f29b3b732": {
+      "title": "I Have No Mouth, and I Must Scream",
+      "url": "https://store.epicgames.com/fr/p/i-have-no-mouth-and-i-must-scream-95c5c2",
+      "notified_at": "2026-06-25T16:14:49.148944+00:00",
+      "value": "8,99 €"
     }
   },
-  "last_check": "2026-06-25T13:09:39.524928+00:00"
+  "last_check": "2026-06-25T16:14:50.139144+00:00"
 }
