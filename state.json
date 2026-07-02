@@ -84,24 +84,30 @@
       "notified_at": "2026-06-25T16:14:48.758513+00:00",
       "value": "17,99 €"
     },
-    "upcoming_9bf3d3188d1e498095bc23c0955538d9": {
-      "title": "River City Girls 2",
-      "url": "https://store.epicgames.com/fr/p/river-city-girls-2-77af3a",
-      "notified_at": "2026-06-25T16:14:48.957341+00:00",
-      "value": "35,99 €"
-    },
-    "upcoming_4ef54d5829b04656902dfa1f29b3b732": {
-      "title": "I Have No Mouth, and I Must Scream",
-      "url": "https://store.epicgames.com/fr/p/i-have-no-mouth-and-i-must-scream-95c5c2",
-      "notified_at": "2026-06-25T16:14:49.148944+00:00",
-      "value": "8,99 €"
-    },
     "upcoming_e5da2c017d4d4afab9f4c56525b66100": {
       "title": "Nova Lands",
       "url": "https://store.epicgames.com/fr/p/nova-lands-4d1788",
       "notified_at": "2026-07-01T11:15:43.106520+00:00",
       "value": "19,99 €"
+    },
+    "9bf3d3188d1e498095bc23c0955538d9": {
+      "title": "River City Girls 2",
+      "url": "https://store.epicgames.com/fr/p/river-city-girls-2-77af3a",
+      "notified_at": "2026-07-02T15:04:22.027649+00:00",
+      "value": "35,99 €"
+    },
+    "4ef54d5829b04656902dfa1f29b3b732": {
+      "title": "I Have No Mouth, and I Must Scream",
+      "url": "https://store.epicgames.com/fr/p/i-have-no-mouth-and-i-must-scream-95c5c2",
+      "notified_at": "2026-07-02T15:04:22.298211+00:00",
+      "value": "8,99 €"
+    },
+    "upcoming_f247e0af293645bda266fa9957d82d62": {
+      "title": "Tattoo Tycoon",
+      "url": "https://store.epicgames.com/fr/p/tattoo-tycoon-b4352c",
+      "notified_at": "2026-07-02T15:04:22.582920+00:00",
+      "value": "29,99 €"
     }
   },
-  "last_check": "2026-07-02T12:00:54.262618+00:00"
+  "last_check": "2026-07-02T15:04:23.010405+00:00"
 }
