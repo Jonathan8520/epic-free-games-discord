@@ -96,12 +96,6 @@
       "notified_at": "2026-07-02T15:04:22.298211+00:00",
       "value": "8,99 €"
     },
-    "upcoming_371545146a944478ad5a87f9b581ac29": {
-      "title": "Echo Generation: Midnight Edition",
-      "url": "https://store.epicgames.com/fr/p/echo-generation-midnight-edition-069026",
-      "notified_at": "2026-07-08T15:08:06.678850+00:00",
-      "value": "22,39 €"
-    },
     "e5da2c017d4d4afab9f4c56525b66100": {
       "title": "Nova Lands",
       "url": "https://store.epicgames.com/fr/p/nova-lands-4d1788",
@@ -114,18 +108,24 @@
       "notified_at": "2026-07-09T15:51:12.959403+00:00",
       "value": "29,99 €"
     },
-    "upcoming_c27f2bb0dd9b4c4ca4973e653ab8a5be": {
-      "title": "Luto",
-      "url": "https://store.epicgames.com/fr/p/luto-0a4ab3",
-      "notified_at": "2026-07-09T15:51:13.272907+00:00",
-      "value": "19,99 €"
-    },
     "upcoming_223c59e227e74e079a1bbe5a234b896f": {
       "title": "Foretales",
       "url": "https://store.epicgames.com/fr/p/foretales-d6c5bd",
       "notified_at": "2026-07-15T11:20:19.895987+00:00",
       "value": "19,99 €"
+    },
+    "c27f2bb0dd9b4c4ca4973e653ab8a5be": {
+      "title": "Luto",
+      "url": "https://store.epicgames.com/fr/p/luto-0a4ab3",
+      "notified_at": "2026-07-16T15:24:33.827389+00:00",
+      "value": "19,99 €"
+    },
+    "371545146a944478ad5a87f9b581ac29": {
+      "title": "Echo Generation: Midnight Edition",
+      "url": "https://store.epicgames.com/fr/p/echo-generation-midnight-edition-069026",
+      "notified_at": "2026-07-16T15:24:34.059761+00:00",
+      "value": "22,39 €"
     }
   },
-  "last_check": "2026-07-16T13:16:21.641861+00:00"
+  "last_check": "2026-07-16T15:24:34.445764+00:00"
 }
