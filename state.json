@@ -108,12 +108,6 @@
       "notified_at": "2026-07-09T15:51:12.959403+00:00",
       "value": "29,99 €"
     },
-    "upcoming_223c59e227e74e079a1bbe5a234b896f": {
-      "title": "Foretales",
-      "url": "https://store.epicgames.com/fr/p/foretales-d6c5bd",
-      "notified_at": "2026-07-15T11:20:19.895987+00:00",
-      "value": "19,99 €"
-    },
     "c27f2bb0dd9b4c4ca4973e653ab8a5be": {
       "title": "Luto",
       "url": "https://store.epicgames.com/fr/p/luto-0a4ab3",
@@ -125,7 +119,25 @@
       "url": "https://store.epicgames.com/fr/p/echo-generation-midnight-edition-069026",
       "notified_at": "2026-07-16T15:24:34.059761+00:00",
       "value": "22,39 €"
+    },
+    "223c59e227e74e079a1bbe5a234b896f": {
+      "title": "Foretales",
+      "url": "https://store.epicgames.com/fr/p/foretales-d6c5bd",
+      "notified_at": "2026-07-23T15:00:56.683863+00:00",
+      "value": "19,99 €"
+    },
+    "upcoming_fb86769d4908427986ca9f7d94b581c2": {
+      "title": "OTXO",
+      "url": "https://store.epicgames.com/fr/p/otxo-396b8b",
+      "notified_at": "2026-07-23T15:00:57.017048+00:00",
+      "value": "13,49 €"
+    },
+    "upcoming_c71375f1ac9444fcae1ca584a53ba6f0": {
+      "title": "Sol Cesto",
+      "url": "https://store.epicgames.com/fr/p/sol-cesto-e9b803",
+      "notified_at": "2026-07-23T15:00:57.379578+00:00",
+      "value": "13,99 €"
     }
   },
-  "last_check": "2026-07-23T12:22:07.141499+00:00"
+  "last_check": "2026-07-23T15:00:57.914668+00:00"
 }
