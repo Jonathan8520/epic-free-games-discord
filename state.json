@@ -126,18 +126,6 @@
       "notified_at": "2026-07-23T15:00:56.683863+00:00",
       "value": "19,99 €"
     },
-    "upcoming_fb86769d4908427986ca9f7d94b581c2": {
-      "title": "OTXO",
-      "url": "https://store.epicgames.com/fr/p/otxo-396b8b",
-      "notified_at": "2026-07-23T15:00:57.017048+00:00",
-      "value": "13,49 €"
-    },
-    "upcoming_c71375f1ac9444fcae1ca584a53ba6f0": {
-      "title": "Sol Cesto",
-      "url": "https://store.epicgames.com/fr/p/sol-cesto-e9b803",
-      "notified_at": "2026-07-23T15:00:57.379578+00:00",
-      "value": "13,99 €"
-    },
     "mobile_3721": {
       "title": "Foretales (Epic Games) Giveaway",
       "url": "https://www.gamerpower.com/open/foretales-epic-games-giveaway",
@@ -149,7 +137,25 @@
       "url": "https://store.epicgames.com/fr/p/beacon-pines-629fc3",
       "notified_at": "2026-07-29T12:54:21.591692+00:00",
       "value": "17,99 €"
+    },
+    "fb86769d4908427986ca9f7d94b581c2": {
+      "title": "OTXO",
+      "url": "https://store.epicgames.com/fr/p/otxo-396b8b",
+      "notified_at": "2026-07-30T15:00:28.302850+00:00",
+      "value": "13,49 €"
+    },
+    "c71375f1ac9444fcae1ca584a53ba6f0": {
+      "title": "Sol Cesto",
+      "url": "https://store.epicgames.com/fr/p/sol-cesto-e9b803",
+      "notified_at": "2026-07-30T15:00:28.872312+00:00",
+      "value": "13,99 €"
+    },
+    "upcoming_231e8f6d250a453f9c44c0adf3a34656": {
+      "title": "We Were Here Together",
+      "url": "https://store.epicgames.com/fr/p/we-were-here-together-6a6d66",
+      "notified_at": "2026-07-30T15:00:29.526094+00:00",
+      "value": "11,69 €"
     }
   },
-  "last_check": "2026-07-30T12:22:13.115565+00:00"
+  "last_check": "2026-07-30T15:00:30.066132+00:00"
 }
