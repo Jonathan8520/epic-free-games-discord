@@ -9,7 +9,7 @@ notifie sur Discord avec un lien direct pour les réclamer en 2 clics.
 - 💎 Détecte les jeux à **-100% surprise** hors promo hebdo (rare)
 - 📱 Notifie les jeux gratuits **mobiles** (iOS/Android) via GamerPower
 - ⏰ Affiche les **dates de début/fin** avec timestamps Discord auto-localisés
-- ✅ **Auto-claim optionnel** — réclame les jeux directement sur ton compte Epic (voir plus bas)
+- ⚠️ **Auto-claim** — à l'arrêt depuis fin mai 2026 (voir [état actuel](#-auto-claim--état-de-larrêt-actuel))
 
 ---
 
@@ -21,23 +21,33 @@ notifie sur Discord avec un lien direct pour les réclamer en 2 clics.
 ├── config.py                  → Configuration centralisée
 ├── epic.py                    → API Epic Games Store
 ├── mobile.py                  → Jeux gratuits mobiles (GamerPower)
-├── notifier.py                → Notifications Discord
+├── notifier.py                → Notifications Discord (avec footers claim)
 ├── scheduler.py               → Garde intelligente (évite les runs inutiles)
 ├── state.py                   → Gestion état persistant
 ├── logger.py                  → Logs
-├── auth.py                    → OAuth Epic (refresh token launcher)         [auto-claim]
-├── claimer.py                 → POST sur egs-platform-service quickPurchase  [auto-claim]
-├── gh_secrets.py              → Update du EPIC_REFRESH_TOKEN via API GitHub  [auto-claim]
-├── test_claim.py              → Script de test isolé du claim                [debug]
+│
+│  Auto-claim — code présent mais bloqué (voir AUTO_CLAIM_FINDINGS.md)
+├── claim_browser.py           → Playwright DOM clicks (marche en local, bloqué Cloudflare sur GH Actions)
+├── claimer_api.py             → Tentative API pure avec CapMonster (incomplet, captcha solver à finaliser)
+├── login_epic.py              → One-shot pour générer epic_storage_state.json
+├── claimer.py                 → Ancien claim API legacy (marche encore pour F2P / DLC)
+├── auth.py                    → OAuth Epic launcher (utilisé par claimer.py)
+├── gh_secrets.py              → Update des secrets GH via API (rotation tokens)
+├── test_claim.py              → Debug API claim (bootstrap + 3 endpoints candidats)
+│
 ├── requirements.txt
-└── .github/workflows/epic.yml → Workflow GitHub Actions
+├── .env.example
+├── .github/workflows/
+│   ├── epic.yml               → Workflow horaire principal
+│   └── test_claim.yml         → workflow_dispatch pour tester claim_browser
+└── AUTO_CLAIM_FINDINGS.md     → Investigation complète sur le claim Epic 2026 + options
 ```
 
 Le `state.json` vit sur une **branche `datas`** séparée pour garder `main` propre.
 
 ---
 
-## 🚀 Setup
+## 🚀 Setup minimal (juste les notifs, sans auto-claim)
 
 ### 1. Créer un webhook Discord
 Paramètres du salon → Intégrations → Webhooks → Nouveau webhook → copier l'URL.
@@ -51,17 +61,9 @@ Settings → Secrets and variables → Actions → New repository secret
 
 | Secret | Requis | Description |
 |---|---|---|
-| `DISCORD_WEBHOOK`    | ✅ | Webhook salon jeux gratuits |
-| `ALERT_WEBHOOK`      | ❌ | Webhook salon alertes (défaut = DISCORD_WEBHOOK) |
-| `ROLE_ID`            | ❌ | ID rôle Discord à mentionner |
-| `EPIC_REFRESH_TOKEN` | ❌ | Auto-claim — refresh token launcher Epic (voir [Auto-claim](#-auto-claim-optionnel)) |
-| `GH_PAT`             | ❌ | Auto-claim — PAT GitHub avec scope `secrets:write` |
-
-Et dans l'onglet **Variables** (pas Secrets) :
-
-| Variable | Requise | Description |
-|---|---|---|
-| `AUTO_CLAIM` | ❌ | Mettre `true` pour activer l'auto-claim |
+| `DISCORD_WEBHOOK` | ✅ | Webhook salon jeux gratuits |
+| `ALERT_WEBHOOK`   | ❌ | Webhook salon alertes (défaut = DISCORD_WEBHOOK) |
+| `ROLE_ID`         | ❌ | ID rôle Discord à mentionner |
 
 ### 3. Créer la branche `datas`
 ```bash
@@ -92,82 +94,57 @@ Va dans Actions → "Run workflow" pour tester.
 
 ## 🧪 Tester en local
 
-Pour prévisualiser les notifs sans toucher au `state.json` (utile pour itérer sur le design) :
+Pour prévisualiser les notifs sans toucher au `state.json` :
 
 ```bash
 pip install -r requirements.txt
-export DISCORD_WEBHOOK="https://discord.com/api/webhooks/..."
+cp .env.example .env  # puis remplis DISCORD_WEBHOOK dedans
 python preview.py
 ```
 
 ---
 
-## ✅ Auto-claim (optionnel)
+## ⚠️ Auto-claim — état de l'arrêt actuel
 
-**Mise à jour 2026** : Epic a (silencieusement) levé le captcha sur son endpoint
-de claim launcher. Un POST `egs-platform-service.store.epicgames.com/api/v2/private/egs/purchase/quickPurchase`
-avec un Bearer token launcher suffit pour réclamer un jeu gratuit. Pas de
-browser headless, pas de Playwright, pas de captcha à résoudre.
+**État au 2026-05-31** : l'auto-claim ne fonctionne plus, **par choix temporaire**. Le bot envoie quand même les notifs Discord ; tu cliques manuellement sur le lien pour réclamer.
 
-Le bot peut donc maintenant **réclamer automatiquement** chaque jeu gratuit
-sur ton compte Epic, juste après la notif Discord. Le footer de l'embed
-indique le statut :
+### Pourquoi c'est arrêté
 
-- `✅ Réclamé automatiquement sur ton compte`
-- `ℹ️ Déjà dans ta bibliothèque`
-- `⚠️ Auto-claim échoué — clique pour récupérer`
+Plusieurs barrages Epic mis en 2026 :
 
-### Garde-fous
+1. **L'API pure (claimer.py)** : marche pour F2P / DLC permanents (Valorant, Triplex…), mais **pas pour les BASE_GAME hebdo** (les jeux gratuits du jeudi). Epic répond `not eligible` ou `CHECKOUT` sur ces offers, quelle que soit l'IP.
 
-Aucun risque de payer un jeu non gratuit :
+2. **Le browser Playwright (claim_browser.py)** : marche parfaitement en local (testé sur Tomb Raider + Bermuda le 23/05) mais **bloqué par Cloudflare** sur GitHub Actions (les IPs Azure du runner sont flaguées comme datacenter et reçoivent un challenge "Vérifiez que vous êtes humain"). Même problème sur Oracle Cloud, AWS, etc.
 
-1. `epic.py` ne retourne que des jeux dont la promo `discountPercentage == 0` est active
-2. `claimer._is_free()` re-vérifie le prix juste avant le POST via GraphQL
-3. Epic refuse de débiter sans `paymentMethod` dans le payload (qu'on n'envoie jamais)
+3. **L'API du flow checkout (claimer_api.py)** : tentative en cours. On a capturé un HAR du flow manuel, identifié l'endpoint `payment-website-pci.ol.epicgames.com/v2/purchase/confirm-order` qui finalise le claim sans Cloudflare. **Le bloqueur unique** est qu'il exige un `captchaToken` hCaptcha qu'on doit obtenir via un service tiers (2Captcha, CapMonster, CapSolver…). Voir [AUTO_CLAIM_FINDINGS.md](AUTO_CLAIM_FINDINGS.md) pour les détails.
 
-### Activation
+### Options pour le relancer
 
-#### a) Générer un refresh token Epic
+Documentées dans [AUTO_CLAIM_FINDINGS.md](AUTO_CLAIM_FINDINGS.md), mais en résumé :
 
-1. Connecte-toi à https://www.epicgames.com
-2. Ouvre : https://www.epicgames.com/id/api/redirect?clientId=34a02cf8f4414e29b15921876da36f9a&responseType=code
-3. Copie la valeur `authorizationCode` du JSON (5 min de validité)
-4. Lance :
-   ```bash
-   python test_claim.py --bootstrap <authorizationCode>
-   ```
-5. Copie le `refresh_token` affiché → secret GitHub `EPIC_REFRESH_TOKEN`
+| Option | Coût | Setup |
+|---|---|---|
+| **A. Self-hosted runner sur ton PC** | 0 € | ~15 min — IP résidentielle FR = pas de Cloudflare, code Playwright actuel marche direct |
+| **B. Service de résolution captcha (2Captcha hCaptcha)** | ~1 $/3 ans | ~30 min — finir `claimer_api.py` + push API key en GH Secret |
+| **C. Status quo** | 0 € | 0 min — clic manuel via la notif Discord (1 click/semaine) |
 
-Le refresh token est valide ~1 an. Epic en émet un nouveau à chaque usage —
-le bot le re-pousse automatiquement dans le secret GitHub via l'API.
+À toi de choisir quand tu veux relancer. Le bot continue à notifier correctement entre-temps.
 
-#### b) Générer un PAT GitHub fine-grained
+### Tester en local (si tu veux jouer avec le claim)
 
-Pour permettre au bot de mettre à jour `EPIC_REFRESH_TOKEN` après rotation :
-
-1. https://github.com/settings/personal-access-tokens → **Generate new token**
-2. **Repository access** : sélectionne uniquement ce repo
-3. **Permissions → Repository → Secrets** : **Read and write**
-4. Pas d'autre permission nécessaire
-5. Copie le token → secret GitHub `GH_PAT`
-
-#### c) Activer
-
-Dans l'onglet **Variables** des Actions du repo :
-- `AUTO_CLAIM` = `true`
-
-Au prochain run, les jeux gratuits seront réclamés automatiquement.
-
-### Désactiver
-
-Met `AUTO_CLAIM` à `false` (ou supprime la variable). Aucun impact sur les notifs.
-
-### Tester en local
-
-Le script `test_claim.py` permet de tester le flow indépendamment du bot :
+Le code Playwright fonctionne sur ta machine (IP résidentielle) :
 
 ```bash
-$env:EPIC_REFRESH_TOKEN = "..."
+# 1. One-shot login (génère epic_storage_state.json)
+python login_epic.py
+
+# 2. Test claim sur un slug
+python claim_browser.py tomb-raider-iiii-remastered-538640
+```
+
+Et l'ancien claim API (F2P / DLC seulement) :
+
+```bash
+$env:EPIC_REFRESH_TOKEN = "..."  # généré via test_claim.py --bootstrap
 python test_claim.py rocket-league--triplex-black-wheels
-# ou un slug quelconque, ou --manual <namespace> <offerId>
 ```
