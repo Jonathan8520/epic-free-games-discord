@@ -53,7 +53,8 @@ def main():
     except Exception as e:
         log.warning(f"[SURPRISE] Erreur fetch : {e}")
 
-    # 4. Auto-claim via Playwright (DOM clicks) — voir reference_autoclaim_endpoint.
+    # 4. Auto-claim via Playwright (DOM clicks). Voir AUTO_CLAIM_FINDINGS.md.
+    #    Marche en local. Sur GH Actions Azure : bloqué par Cloudflare → fallback footer "captcha".
     claimer: Claimer | None = None
     claim_blocked = False
     new_games_to_process = [g for g in current_games if not state.is_notified(g["id"])]
@@ -83,7 +84,6 @@ def main():
         outcome, msg = claimer.claim(slug_or_url)
         log.info(f"[CLAIM] {game['title']} → {outcome}" + (f" ({msg})" if msg else ""))
         if outcome == ClaimOutcome.CAPTCHA:
-            # On bloque les claims suivants ce run — pas la peine d'insister
             log.warning("[CLAIM] hCaptcha actif — claims suivants désactivés.")
             claim_blocked = True
             return "captcha"

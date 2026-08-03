@@ -31,15 +31,15 @@ class Config:
     GITHUB_REPO     : str = _optional("GITHUB_REPOSITORY")
     STATE_FILE      : str = "state.json"
 
-    # Auto-claim Epic via Playwright (DOM clicks). Voir reference_autoclaim_endpoint.
-    # Le storage_state.json est généré localement par login_epic.py, puis stocké
-    # base64-encodé dans le secret GH EPIC_STORAGE_STATE_B64.
+    # Auto-claim Epic API-pure (voir AUTO_CLAIM_FINDINGS + reference_autoclaim_endpoint).
+    # storage_state.json (cookies session web) généré par login_epic.py → b64 en GH Secret.
+    # CapMonster résout le hCaptcha invisible exigé par confirm-order.
     AUTO_CLAIM             : bool = _bool("AUTO_CLAIM", False)
     EPIC_STORAGE_STATE_B64 : str  = _optional("EPIC_STORAGE_STATE_B64")
-    GH_PAT                 : str  = _optional("GH_PAT")  # pour persister le state roté
+    CAPMONSTER_API_KEY     : str  = _optional("CAPMONSTER_API_KEY")
+    GH_PAT                 : str  = _optional("GH_PAT")  # pour persister storage_state roté
 
     # Legacy : EPIC_REFRESH_TOKEN encore utile pour test_claim.py (API directe).
-    # main.py n'en dépend plus depuis le passage à Playwright.
     EPIC_REFRESH_TOKEN : str = _optional("EPIC_REFRESH_TOKEN")
 
     @property
@@ -48,7 +48,9 @@ class Config:
 
     @property
     def can_claim(self) -> bool:
-        """Vrai si toutes les conditions sont réunies pour tenter l'auto-claim."""
+        """Vrai si toutes les conditions sont réunies pour tenter l'auto-claim browser
+        (claim_browser.py). Pour le flow API pur (claimer_api.py), il faudrait aussi
+        CAPMONSTER_API_KEY ou équivalent — actuellement non utilisé en prod."""
         return (self.AUTO_CLAIM
                 and bool(self.EPIC_STORAGE_STATE_B64)
                 and bool(self.GH_PAT)
