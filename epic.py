@@ -121,6 +121,22 @@ def _extract_slug(game: dict) -> str:
     return ""
 
 
+def _discount_end_date(game: dict) -> str | None:
+    """
+    Fin de la remise pour un jeu à -100% hors promo hebdo.
+    Ces offres ont `promotions: null` — la date vit dans
+    price.lineOffers[].appliedRules[].endDate.
+    """
+    try:
+        for line in game["price"]["lineOffers"]:
+            for rule in line.get("appliedRules") or []:
+                if rule.get("endDate"):
+                    return rule["endDate"]
+    except (KeyError, TypeError):
+        pass
+    return None
+
+
 def _parse_game(game: dict, status: str) -> dict:
     slugs = _split_slugs_by_platform(game)
     # _extract_slug inclut le fallback productSlug/urlSlug pour les jeux sans catalogNs.mappings
@@ -138,9 +154,13 @@ def _parse_game(game: dict, status: str) -> dict:
         mobile_urls["android"] = f"https://store.epicgames.com/fr/p/{slugs['android']}"
 
     # Dates de la promo (current ou upcoming selon le statut)
-    key = "promotionalOffers" if status == "current" else "upcomingPromotionalOffers"
-    dates = _free_dates(game, key)
-    start_date, end_date = (dates if dates else (None, None))
+    if status == "surprise":
+        # Pas de bloc `promotions` sur ces offres — cf _discount_end_date
+        start_date, end_date = None, _discount_end_date(game)
+    else:
+        key = "promotionalOffers" if status == "current" else "upcomingPromotionalOffers"
+        dates = _free_dates(game, key)
+        start_date, end_date = (dates if dates else (None, None))
 
     return {
         "id"             : game.get("id", ""),
@@ -191,9 +211,11 @@ def get_free_games() -> list[dict]:
 GRAPHQL_URL = "https://store.epicgames.com/graphql"
 
 SEARCH_QUERY = """
-query searchStoreQuery($category: String, $count: Int, $country: String!, $locale: String, $priceRange: String) {
+query searchStoreQuery($category: String, $count: Int, $country: String!, $locale: String,
+                       $onSale: Boolean, $sortBy: String, $sortDir: String) {
   Catalog {
-    searchStore(category: $category, count: $count, country: $country, locale: $locale, priceRange: $priceRange) {
+    searchStore(category: $category, count: $count, country: $country, locale: $locale,
+                onSale: $onSale, sortBy: $sortBy, sortDir: $sortDir) {
       elements {
         id
         title
@@ -211,6 +233,7 @@ query searchStoreQuery($category: String, $count: Int, $country: String!, $local
             originalPrice
             fmtPrice(locale: $locale) { originalPrice discountPrice }
           }
+          lineOffers { appliedRules { endDate discountSetting { discountPercentage } } }
         }
       }
     }
@@ -224,6 +247,11 @@ def get_surprise_free_games(exclude_ids: set[str] | None = None) -> list[dict]:
     Cherche les jeux du catalogue actuellement à 0€ (hors promo hebdo).
     Filtre les démos et les jeux déjà couverts par get_free_games().
     Retourne une liste vide en cas d'erreur (non bloquant).
+
+    NB : ne PAS utiliser `priceRange: "[0,0]"` ici — ce filtre porte sur le prix
+    de base, donc il ne remonte que du free-to-play (originalPrice == 0), que le
+    filtre `original == 0` plus bas rejette ensuite intégralement. On trie par
+    prix courant croissant sur les offres en promo : les 0€ arrivent en tête.
     """
     exclude_ids = exclude_ids or set()
     try:
@@ -232,11 +260,13 @@ def get_surprise_free_games(exclude_ids: set[str] | None = None) -> list[dict]:
             json={
                 "query": SEARCH_QUERY,
                 "variables": {
-                    "category"  : "games/edition/base",
-                    "count"     : 40,
-                    "country"   : "FR",
-                    "locale"    : "fr",
-                    "priceRange": "[0,0]",
+                    "category": "games/edition/base",
+                    "count"   : 40,   # Epic plafonne la réponse à 40 quand sortBy est présent
+                    "country" : "FR",
+                    "locale"  : "fr",
+                    "onSale"  : True,
+                    "sortBy"  : "currentPrice",
+                    "sortDir" : "ASC",
                 },
             },
             headers={**HEADERS, "Content-Type": "application/json"},
