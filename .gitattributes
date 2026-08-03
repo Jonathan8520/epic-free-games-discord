@@ -1,0 +1,15 @@
+# Fins de ligne : LF dans le depot ET dans le working tree.
+#
+# Sans ca, un outil qui reecrit un fichier en CRLF sur Windows produit un
+# diff fantome ou le fichier apparait reecrit integralement alors que le
+# contenu est identique. Ca a deja noye 8 vraies modifs dans 13 fichiers
+# de bruit (aout 2026). Pour trier un cas pareil :
+#   git diff --ignore-cr-at-eol --stat HEAD
+* text=auto eol=lf
+
+# Binaires : ne jamais convertir
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.har binary
