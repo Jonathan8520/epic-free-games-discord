@@ -162,7 +162,14 @@ def notify_mobile_game(game: dict):
             "value" : f"~~{worth}~~  →  **GRATUIT**",
             "inline": True,
         })
-    if expires:
+    expires_ts = game.get("expires_ts")
+    if expires_ts:
+        fields.append({
+            "name"  : "Disponible jusqu'au",
+            "value" : f"<t:{expires_ts}:f> (<t:{expires_ts}:R>)",
+            "inline": True,
+        })
+    elif expires:
         fields.append({
             "name"  : "Disponible jusqu'au",
             "value" : expires,
