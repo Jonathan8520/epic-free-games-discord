@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "0 * * * *"  # Toutes les heures (le scheduler Python filtre)
   workflow_dispatch:
+    inputs:
+      force:
+        description: "Ignorer le scheduler et forcer la verification"
+        type: boolean
+        default: true
 
 jobs:
   check:
@@ -55,6 +60,7 @@ jobs:
           AUTO_CLAIM            : ${{ vars.AUTO_CLAIM }}
           EPIC_STORAGE_STATE_B64: ${{ secrets.EPIC_STORAGE_STATE_B64 }}
           GH_PAT                : ${{ secrets.GH_PAT }}
+          FORCE_RUN             : ${{ inputs.force }}
         run: python main.py
 
       - name: Upload debug screenshots (on failure)
