@@ -140,10 +140,10 @@ def alert_api_down():
 
 # ── Notifications mobile ─────────────────────────────────────
 
-def notify_mobile_game(game: dict):
+def notify_mobile_game(game: dict, upcoming: bool = False):
     """
     Notifie d'un jeu gratuit Epic sur mobile (iOS/Android).
-    Lien direct vers la fiche du jeu.
+    upcoming=True : giveaway programmé mais pas encore actif (embed violet).
     """
     title     = game.get("title", "Jeu inconnu")
     url       = game.get("url", "")
@@ -152,8 +152,11 @@ def notify_mobile_game(game: dict):
     worth     = game.get("worth", "")
     expires   = game.get("expires", "")
 
-    ping    = f"<@&{cfg.ROLE_ID}> " if cfg.ROLE_ID else ""
-    content = f"{ping}📱 Jeu gratuit Epic Games sur **{platforms}** !"
+    ping = f"<@&{cfg.ROLE_ID}> " if cfg.ROLE_ID else ""
+    if upcoming:
+        content = f"{ping}📱 Bientôt gratuit sur **{platforms}** !"
+    else:
+        content = f"{ping}📱 Jeu gratuit Epic Games sur **{platforms}** !"
 
     fields = []
     if worth and worth not in ("$0.00", "0.00", ""):
@@ -162,6 +165,14 @@ def notify_mobile_game(game: dict):
             "value" : f"~~{worth}~~  →  **GRATUIT**",
             "inline": True,
         })
+    starts_ts = game.get("starts_ts")
+    if upcoming and starts_ts:
+        fields.append({
+            "name"  : "Disponible à partir du",
+            "value" : f"<t:{starts_ts}:f> (<t:{starts_ts}:R>)",
+            "inline": True,
+        })
+
     expires_ts = game.get("expires_ts")
     if expires_ts:
         fields.append({
@@ -193,9 +204,9 @@ def notify_mobile_game(game: dict):
         "title"      : f"📱 {title}",
         "description": game.get("description", ""),
         "url"        : url,
-        "color"      : 0x1ED760,
+        "color"      : 0x7F77DD if upcoming else 0x1ED760,
         "fields"     : fields,
-        "footer"     : {"text": f"Epic Games Store Mobile • {platforms}"},
+        "footer"     : {"text": ("Epic Games Store Mobile • Bientôt gratuit • " if upcoming else "Epic Games Store Mobile • ") + platforms},
     }
     if image:
         embed["image"] = {"url": image}
