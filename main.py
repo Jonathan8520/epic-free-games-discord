@@ -14,7 +14,7 @@ from config import cfg
 from state import State
 from epic import get_free_games, get_surprise_free_games
 from mobile import get_epic_mobile_games, get_new_mobile_games, scan_scheduled_claims
-from notifier import notify_new_game, notify_upcoming_game, notify_surprise_game, notify_mobile_game, alert_api_down
+from notifier import notify_new_game, notify_upcoming_game, notify_surprise_game, notify_mobile_game, notify_recap, alert_api_down
 from scheduler import should_run
 from logger import log
 from claim_browser import Claimer, ClaimOutcome
@@ -58,6 +58,8 @@ def main():
     # 4. Auto-claim via Playwright (DOM clicks). Voir AUTO_CLAIM_FINDINGS.md.
     #    Marche en local. Sur GH Actions Azure : bloqué par Cloudflare → fallback footer "captcha".
     claimer: Claimer | None = None
+    recap_pc: list[dict] = []
+    recap_mobile: list[dict] = []
     claim_blocked = False
     new_games_to_process = [g for g in current_games if not state.is_notified(g["id"])]
     surprise_to_process  = [g for g in surprise if not state.is_notified(g["id"])]
@@ -102,6 +104,7 @@ def main():
             log.info(f"Nouveau jeu détecté : {game['title']}")
             status = try_claim(game)
             notify_new_game(game, claim_status=status)
+            recap_pc.append(game)
             state.mark_notified(game)
             state.remove(f"upcoming_{game['id']}")
 
@@ -119,6 +122,7 @@ def main():
             log.info(f"Surprise gratuite détectée : {game['title']}")
             status = try_claim(game)
             notify_surprise_game(game, claim_status=status)
+            recap_pc.append(game)
             state.mark_notified(game)
 
     # 8. Fermer le browser et persister le storage_state mis à jour
@@ -139,6 +143,7 @@ def main():
         for game in new_mobile:
             log.info(f"[MOBILE] Nouveau jeu mobile : {game['title']}")
             notify_mobile_game(game)
+            recap_mobile.append(game)
             state.mark_notified({
                 "id"            : f"mobile_{game['id']}",
                 "title"         : game["title"],
@@ -164,7 +169,10 @@ def main():
     except Exception as e:
         log.warning(f"[MOBILE] Erreur récupération jeux mobiles : {e}")
 
-    # 6. Sauvegarde
+    # 7. Récapitulatif final (uniquement si au moins 2 jeux ce run)
+    notify_recap(recap_pc, recap_mobile)
+
+    # 8. Sauvegarde
     state.save()
     log.info("Done.")
 
