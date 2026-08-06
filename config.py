@@ -29,6 +29,7 @@ class Config:
     ALERT_WEBHOOK   : str = _optional("ALERT_WEBHOOK")  # Salon séparé pour les alertes techniques
 
     GITHUB_REPO     : str = _optional("GITHUB_REPOSITORY")
+    FORCE_RUN       : bool = _bool("FORCE_RUN", False)  # bypass scheduler (run manuel)
     STATE_FILE      : str = "state.json"
 
     # Auto-claim Epic API-pure (voir AUTO_CLAIM_FINDINGS + reference_autoclaim_endpoint).
