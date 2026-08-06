@@ -58,8 +58,17 @@ def _parse_date(value: str | None) -> datetime | None:
         return None
 
 
+_CACHE: dict[str, dict] = {}
+
+
 def _fetch(platform: str) -> dict:
-    """Appelle discover/home pour une plateforme. count est plafonné à 10 côté API."""
+    """Appelle discover/home pour une plateforme. count est plafonné à 10 côté API.
+
+    Le résultat est mémorisé pour la durée du process : get_epic_mobile_games() et
+    scan_scheduled_claims() partagent donc le même payload (2 requêtes, pas 4).
+    """
+    if platform in _CACHE:
+        return _CACHE[platform]
     params = {
         "count": 10,
         "start": 0,
@@ -73,7 +82,8 @@ def _fetch(platform: str) -> dict:
         try:
             resp = requests.get(API_URL, params=params, headers=HEADERS, timeout=TIMEOUT)
             resp.raise_for_status()
-            return resp.json()
+            _CACHE[platform] = resp.json()
+            return _CACHE[platform]
         except requests.RequestException as e:
             last_err = e
             if attempt < RETRIES - 1:
