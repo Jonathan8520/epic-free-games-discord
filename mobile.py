@@ -44,6 +44,8 @@ RETRIES = 3
 HEADERS = {
     "User-Agent": "EpicGamesStore/1.0 (Android)",
     "Accept": "application/json",
+    "Cache-Control": "no-cache",
+    "Pragma": "no-cache",
 }
 
 STORE_URL = "https://store.epicgames.com/{locale}/p/{slug}"
@@ -76,6 +78,10 @@ def _fetch(platform: str) -> dict:
         "locale": LOCALE,
         "platform": platform,
         "store": "EGS",
+        # Cache-buster obligatoire : la reponse est mise en cache CDN sur la query
+        # string exacte. Sans ce parametre, on peut recevoir l'ancien giveaway
+        # pendant de longues minutes apres la rotation du jeudi 15:00 UTC.
+        "cb": int(time.time() * 1000),
     }
     last_err = None
     for attempt in range(RETRIES):
