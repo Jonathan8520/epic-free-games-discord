@@ -13,7 +13,7 @@ import sys
 from config import cfg
 from state import State
 from epic import get_free_games, get_surprise_free_games
-from mobile import get_epic_mobile_games, get_new_mobile_games
+from mobile import get_epic_mobile_games, get_new_mobile_games, scan_scheduled_claims
 from notifier import notify_new_game, notify_upcoming_game, notify_surprise_game, notify_mobile_game, alert_api_down
 from scheduler import should_run
 from logger import log
@@ -141,6 +141,21 @@ def main():
             notify_mobile_game(game)
             state.mark_notified({
                 "id"            : f"mobile_{game['id']}",
+                "title"         : game["title"],
+                "namespace"     : "",
+                "url"           : game.get("url", ""),
+                "original_price": game.get("worth"),
+            })
+        # Giveaways mobiles programmés mais pas encore actifs (voir docstring
+        # de scan_scheduled_claims : couverture partielle, souvent vide).
+        for game in scan_scheduled_claims():
+            key = f"mobile_next_{game['id']}"
+            if key in seen_ids:
+                continue
+            log.info(f"[MOBILE] Giveaway mobile à venir : {game['title']}")
+            notify_mobile_game(game, upcoming=True)
+            state.mark_notified({
+                "id"            : key,
                 "title"         : game["title"],
                 "namespace"     : "",
                 "url"           : game.get("url", ""),
