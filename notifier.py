@@ -175,9 +175,17 @@ def notify_mobile_game(game: dict):
             "value" : expires,
             "inline": True,
         })
+    mobile_urls = game.get("urls") or {}
+    links = []
+    if mobile_urls.get("ios"):
+        links.append(f"📱 [iOS]({mobile_urls['ios']})")
+    if mobile_urls.get("android"):
+        links.append(f"🤖 [Android]({mobile_urls['android']})")
+    if not links:
+        links.append(f"[Ouvrir dans l'app Epic]({url})")
     fields.append({
         "name"  : "Réclamer le jeu",
-        "value" : f"[Ouvrir dans l'app Epic]({url})",
+        "value" : " · ".join(links),
         "inline": False,
     })
 
@@ -185,7 +193,7 @@ def notify_mobile_game(game: dict):
         "title"      : f"📱 {title}",
         "description": game.get("description", ""),
         "url"        : url,
-        "color"      : 0x7F77DD,
+        "color"      : 0x1ED760,
         "fields"     : fields,
         "footer"     : {"text": f"Epic Games Store Mobile • {platforms}"},
     }
