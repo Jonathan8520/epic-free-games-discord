@@ -112,6 +112,7 @@ def _parse_offer(offer: dict, platform: str) -> dict | None:
         "title": content.get("title", "Jeu inconnu"),
         "slug": slug,
         "url": STORE_URL.format(locale=LOCALE, slug=slug) if slug else "",
+        "urls": {platform: STORE_URL.format(locale=LOCALE, slug=slug)} if slug else {},
         "image": (media.get("card16x9") or media.get("coverImage") or {}).get("imageSrc", ""),
         "icon": (media.get("appIcon") or {}).get("imageSrc", ""),
         "platforms": platform,
@@ -129,6 +130,9 @@ def _merge(results: list[dict], game: dict) -> None:
         if existing["title"] == game["title"]:
             if game["platforms"] not in existing["platforms"]:
                 existing["platforms"] += f", {game['platforms']}"
+            existing["urls"].update(game.get("urls") or {})
+            # lien principal : iOS en priorite, sinon Android
+            existing["url"] = existing["urls"].get("ios") or existing["urls"].get("android") or existing["url"]
             return
     results.append(game)
 
