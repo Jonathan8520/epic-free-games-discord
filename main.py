@@ -28,7 +28,9 @@ def main():
     state = State(cfg.STATE_FILE)
 
     # 1. Faut-il tourner ce run ?
-    if not should_run(state._data.get("last_check")):
+    if cfg.FORCE_RUN:
+        log.info("[SCHEDULER] FORCE_RUN actif - garde-fou ignore.")
+    elif not should_run(state._data.get("last_check")):
         log.info("Rien à faire ce run.")
         state.save()
         return
