@@ -152,11 +152,9 @@ def notify_mobile_game(game: dict, upcoming: bool = False):
     worth     = game.get("worth", "")
     expires   = game.get("expires", "")
 
+    # Pas de ligne de texte : l'embed porte deja le titre, la plateforme et
+    # le statut. On aligne sur notify_new_game qui n'envoie que le ping.
     ping = f"<@&{cfg.ROLE_ID}> " if cfg.ROLE_ID else ""
-    if upcoming:
-        content = f"{ping}📱 Bientôt gratuit sur **{platforms}** !"
-    else:
-        content = f"{ping}📱 Jeu gratuit Epic Games sur **{platforms}** !"
 
     fields = []
     if worth and worth not in ("$0.00", "0.00", ""):
@@ -201,7 +199,7 @@ def notify_mobile_game(game: dict, upcoming: bool = False):
     })
 
     embed = {
-        "title"      : f"📱 {title}",
+        "title"      : f"{'🔜📱' if upcoming else '📱'} {title}",
         "description": game.get("description", ""),
         "url"        : url,
         "color"      : 0x7F77DD if upcoming else 0x1ED760,
@@ -211,4 +209,70 @@ def notify_mobile_game(game: dict, upcoming: bool = False):
     if image:
         embed["image"] = {"url": image}
 
-    _post(cfg.DISCORD_WEBHOOK, {"content": content, "embeds": [embed]})
+    _post(cfg.DISCORD_WEBHOOK, {"content": ping or None, "embeds": [embed]})
+
+
+# ── Récapitulatif ────────────────────────────────────────────
+
+CART_URL = "https://store.epicgames.com/purchase?highlightColor=0078f2{offers}#/purchase/verify"
+
+
+def build_cart_url(games: list[dict]) -> str | None:
+    """
+    Construit une URL de panier Epic pré-rempli avec plusieurs offres.
+    Format : store.epicgames.com/purchase?offers=1-{namespace}-{offerId} (répétable).
+    Ne fonctionne que pour le PC : les offres mobiles se réclament dans l'app.
+    """
+    parts = [
+        f"&offers=1-{g['namespace']}-{g['id']}"
+        for g in games
+        if g.get("namespace") and g.get("id")
+    ]
+    return CART_URL.format(offers="".join(parts)) if parts else None
+
+
+def notify_recap(pc_games: list[dict], mobile_games: list[dict] | None = None):
+    """
+    Message final du run : liste de tout ce qui est réclamable + un lien unique
+    qui ouvre le panier Epic avec tous les jeux PC dedans.
+    """
+    mobile_games = mobile_games or []
+    if len(pc_games) + len(mobile_games) < 2:
+        return  # un seul jeu : l'embed individuel suffit
+
+    lines = []
+    for g in pc_games:
+        price = g.get("original_price")
+        suffix = f" ({price})" if price else ""
+        lines.append(f"🎮 [{g.get('title', '?')}]({g.get('url', '')}){suffix}")
+    for g in mobile_games:
+        urls = g.get("urls") or {}
+        links = " · ".join(
+            f"[{name}]({link})" for name, link in (("iOS", urls.get("ios")), ("Android", urls.get("android"))) if link
+        )
+        lines.append(f"📱 **{g.get('title', '?')}** — {links}" if links else f"📱 {g.get('title', '?')}")
+
+    fields = [{"name": "À réclamer", "value": "\n".join(lines), "inline": False}]
+
+    cart = build_cart_url(pc_games)
+    if cart:
+        fields.append({
+            "name"  : "Tout réclamer d'un coup",
+            "value" : f"🛒 [Ouvrir le panier avec les {len(pc_games)} jeux PC]({cart})",
+            "inline": False,
+        })
+    if mobile_games:
+        fields.append({
+            "name"  : "Mobile",
+            "value" : "À réclamer dans l'app Epic Games Store, le panier web ne les accepte pas.",
+            "inline": False,
+        })
+
+    embed = {
+        "title" : "📋 Récapitulatif",
+        "color" : 0x2B2D31,
+        "fields": fields,
+        "footer": {"text": "Epic Games Store • Récapitulatif du run"},
+    }
+    _post(cfg.DISCORD_WEBHOOK, {"embeds": [embed]})
+    log.info(f"[NOTIFIER] Récap envoyé ({len(pc_games)} PC, {len(mobile_games)} mobile).")
