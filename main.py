@@ -13,7 +13,7 @@ import sys
 from config import cfg
 from state import State
 from epic import get_free_games, get_surprise_free_games
-from mobile import get_epic_mobile_games, get_new_mobile_games, scan_scheduled_claims
+from mobile import get_epic_mobile_games, get_new_mobile_games, scan_scheduled_claims, state_keys
 from notifier import notify_new_game, notify_upcoming_game, notify_surprise_game, notify_mobile_game, notify_recap, alert_api_down
 from scheduler import should_run
 from logger import log
@@ -104,7 +104,8 @@ def main():
             log.info(f"Nouveau jeu détecté : {game['title']}")
             status = try_claim(game)
             notify_new_game(game, claim_status=status)
-            recap_pc.append(game)
+            if status not in ("success", "owned"):
+                recap_pc.append(game)  # inutile de re-proposer un jeu déjà dans la lib
             state.mark_notified(game)
             state.remove(f"upcoming_{game['id']}")
 
@@ -122,7 +123,8 @@ def main():
             log.info(f"Surprise gratuite détectée : {game['title']}")
             status = try_claim(game)
             notify_surprise_game(game, claim_status=status)
-            recap_pc.append(game)
+            if status not in ("success", "owned"):
+                recap_pc.append(game)  # inutile de re-proposer un jeu déjà dans la lib
             state.mark_notified(game)
 
     # 8. Fermer le browser et persister le storage_state mis à jour
@@ -145,7 +147,7 @@ def main():
             notify_mobile_game(game)
             recap_mobile.append(game)
             state.mark_notified({
-                "id"            : f"mobile_{game['id']}",
+                "id"            : state_keys(game)[0],
                 "title"         : game["title"],
                 "namespace"     : "",
                 "url"           : game.get("url", ""),
@@ -154,9 +156,10 @@ def main():
         # Giveaways mobiles programmés mais pas encore actifs (voir docstring
         # de scan_scheduled_claims : couverture partielle, souvent vide).
         for game in scan_scheduled_claims():
-            key = f"mobile_next_{game['id']}"
-            if key in seen_ids:
+            keys = state_keys(game, prefix="mobile_next")
+            if any(k in seen_ids for k in keys):
                 continue
+            key = keys[0]
             log.info(f"[MOBILE] Giveaway mobile à venir : {game['title']}")
             notify_mobile_game(game, upcoming=True)
             state.mark_notified({
@@ -169,10 +172,10 @@ def main():
     except Exception as e:
         log.warning(f"[MOBILE] Erreur récupération jeux mobiles : {e}")
 
-    # 7. Récapitulatif final (uniquement si au moins 2 jeux ce run)
+    # 9. Récapitulatif final (uniquement si au moins 2 jeux ce run)
     notify_recap(recap_pc, recap_mobile)
 
-    # 8. Sauvegarde
+    # 10. Sauvegarde
     state.save()
     log.info("Done.")
 
