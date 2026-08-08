@@ -92,10 +92,11 @@ def main():
             claim_blocked = True
             return "captcha"
         return {
-            ClaimOutcome.SUCCESS: "success",
-            ClaimOutcome.OWNED  : "owned",
-            ClaimOutcome.TIMEOUT: "failed",
-            ClaimOutcome.FAILED : "failed",
+            ClaimOutcome.SUCCESS : "success",
+            ClaimOutcome.OWNED   : "owned",
+            ClaimOutcome.TIMEOUT : "failed",
+            ClaimOutcome.FAILED  : "failed",
+            ClaimOutcome.NOT_FREE: "not_free",
         }.get(outcome, "failed")
 
     # 5. Jeux actuellement gratuits → claim + notif
