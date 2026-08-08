@@ -147,7 +147,9 @@ def notify_mobile_game(game: dict, upcoming: bool = False):
     """
     title     = game.get("title", "Jeu inconnu")
     url       = game.get("url", "")
-    image     = game.get("image", "")
+    # Vignette a droite comme les embeds PC (embed["image"] = grande image en
+    # dessous). L'appIcon est carre, il rend mieux qu'un card16x9 letterboxe.
+    image     = game.get("icon") or game.get("image", "")
     platforms = game.get("platforms", "").upper()
     worth     = game.get("worth", "")
     expires   = game.get("expires", "")
@@ -207,7 +209,7 @@ def notify_mobile_game(game: dict, upcoming: bool = False):
         "footer"     : {"text": ("Epic Games Store Mobile • Bientôt gratuit • " if upcoming else "Epic Games Store Mobile • ") + platforms},
     }
     if image:
-        embed["image"] = {"url": image}
+        embed["thumbnail"] = {"url": image}
 
     _post(cfg.DISCORD_WEBHOOK, {"content": ping or None, "embeds": [embed]})
 
