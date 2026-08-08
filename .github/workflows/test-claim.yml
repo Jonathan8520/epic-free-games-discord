@@ -18,29 +18,39 @@ on:
         description: "Slug ou URL du jeu a tester"
         required: true
         default: "beacon-pines-629fc3"
+      runner:
+        description: "Ou executer le test"
+        type: choice
+        default: self-hosted
+        options:
+          - self-hosted    # VM Oracle 88.96.37.143
+          - ubuntu-latest  # runner GitHub (IP Azure, bloque par Cloudflare)
 
 jobs:
   claim:
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner }}
 
     steps:
       - uses: actions/checkout@v4
 
+      # Sur la VM Oracle on utilise le python3 systeme (3.10) : setup-python
+      # devrait telecharger un runtime a chaque run pour rien.
       - uses: actions/setup-python@v5
+        if: inputs.runner == 'ubuntu-latest'
         with:
           python-version: "3.11"
           cache: "pip"
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
-          python -m playwright install --with-deps chromium
+          python3 -m pip install --quiet --user -r requirements.txt
+          python3 -m playwright install --with-deps chromium
 
       - name: Claim standalone
         env:
           EPIC_STORAGE_STATE_B64: ${{ secrets.EPIC_STORAGE_STATE_B64 }}
           DEBUG_CLAIM           : "1"   # screenshots a chaque etape
-        run: python claim_browser.py "${{ inputs.slug }}"
+        run: python3 claim_browser.py "${{ inputs.slug }}"
 
       - name: Upload screenshots
         if: always()
