@@ -1,0 +1,51 @@
+name: Test claim (diagnostic)
+
+# Lance claim_browser.py en standalone sur un jeu, sans toucher a state.json.
+#
+# Ce que ca valide, meme si le jeu est deja possede :
+#   - EPIC_STORAGE_STATE_B64 se decode et contient encore des cookies de
+#     session Epic valides (le secret date de mai — s'il a expire, autant le
+#     savoir maintenant qu'un jeudi a 17h)
+#   - Cloudflare laisse passer le runner
+#   - le CTA est lu et le garde-fou prix repond correctement
+#
+# Le garde-fou _is_free_offer() interdit tout clic sur une offre payante, donc
+# ce workflow ne peut rien acheter.
+on:
+  workflow_dispatch:
+    inputs:
+      slug:
+        description: "Slug ou URL du jeu a tester"
+        required: true
+        default: "beacon-pines-629fc3"
+
+jobs:
+  claim:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          python -m playwright install --with-deps chromium
+
+      - name: Claim standalone
+        env:
+          EPIC_STORAGE_STATE_B64: ${{ secrets.EPIC_STORAGE_STATE_B64 }}
+          DEBUG_CLAIM           : "1"   # screenshots a chaque etape
+        run: python claim_browser.py "${{ inputs.slug }}"
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: claim-screenshots
+          path: debug_*.png
+          if-no-files-found: ignore
