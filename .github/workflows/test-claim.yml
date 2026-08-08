@@ -46,6 +46,13 @@ jobs:
           python3 -m pip install --quiet --user -r requirements.txt
           python3 -m playwright install --with-deps chromium
 
+      - name: Le Turnstile se resout-il tout seul ?
+        env:
+          EPIC_STORAGE_STATE_B64: ${{ secrets.EPIC_STORAGE_STATE_B64 }}
+          DEBUG_CLAIM           : "1"
+        continue-on-error: true   # informatif : ne doit pas masquer l etape suivante
+        run: python3 test_challenge.py "https://store.epicgames.com/fr/p/${{ inputs.slug }}"
+
       - name: Claim standalone
         env:
           EPIC_STORAGE_STATE_B64: ${{ secrets.EPIC_STORAGE_STATE_B64 }}
