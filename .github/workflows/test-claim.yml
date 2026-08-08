@@ -21,10 +21,12 @@ on:
       runner:
         description: "Ou executer le test"
         type: choice
-        default: self-hosted
+        default: ubuntu-latest
         options:
-          - self-hosted    # VM Oracle 88.96.37.143
-          - ubuntu-latest  # runner GitHub (IP Azure, bloque par Cloudflare)
+          - ubuntu-latest  # seul runner disponible
+          # "self-hosted" retire : la VM Oracle etait challengee exactement
+          # comme Azure, le runner a ete desinstalle. Ne le remettre que si on
+          # dispose un jour d une IP residentielle.
 
 jobs:
   claim:
