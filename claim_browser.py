@@ -42,11 +42,13 @@ SELECTORS = {
     "iframe"         : '#webPurchaseContainer iframe',
 }
 
+# Un claim à 0 € affiche "Ajouter à la bibliothèque" (vérifié 2026-05-23).
+# "Commander" / "Place Order" sont les libellés d'un ACHAT PAYANT — ils ont été
+# retirés volontairement : si Epic présentait ce bouton, c'est que l'offre n'est
+# pas gratuite, et on préfère échouer que payer.
 PLACE_ORDER_TEXTS = [
     "Ajouter à la bibliothèque",
     "Add to Library",
-    "Commander",
-    "Place Order",
 ]
 EULA_AGREE_TEXTS = [
     "J'accepte",
@@ -64,6 +66,17 @@ class ClaimOutcome:
     CAPTCHA  = "captcha"
     TIMEOUT  = "timeout"
     FAILED   = "failed"
+    NOT_FREE = "not_free"   # garde-fou prix : l'offre n'est plus à 0 €
+
+
+# Garde-fou prix. Relevé sur le store le 2026-08-09 :
+#   gratuit → CTA "Obtenir", bloc d'achat "-100 % / 17,99 €* / Gratuit"
+#   payant  → CTA "Acheter",  bloc d'achat "59,99 €" (pas de "Gratuit")
+# On exige les DEUX signaux : un CTA d'acquisition ET la mention de gratuité.
+BUY_CTA_TEXTS  = ("acheter", "buy", "commander", "place order",
+                  "précommander", "pre-order", "pre-purchase")
+FREE_CTA_TEXTS = ("obtenir", "get")
+FREE_MARKERS   = ("gratuit", "free")
 
 
 def _click_button_by_text(frame, texts: list[str], timeout_ms: int) -> bool:
@@ -83,6 +96,46 @@ def _detect_owned(page) -> bool:
         return False
     t = text.lower()
     return "bibliothèque" in t or "in library" in t or "owned" in t
+
+
+def _is_free_offer(page) -> tuple[bool, str]:
+    """
+    Revérifie que l'offre est bien à 0 € JUSTE AVANT de cliquer.
+
+    Indispensable : le filtre de `epic.py` porte sur la fenêtre de promo au
+    moment du fetch, et la rotation Epic tombe le jeudi 15:00 UTC. Un run qui
+    récupère la liste à 14:59 et clique à 15:00 viserait un jeu redevenu payant.
+    Ici on lit le DOM au dernier moment, donc plus de fenêtre de course.
+
+    Retourne (c_est_gratuit, raison).
+    """
+    try:
+        cta = page.locator(SELECTORS["purchase_cta"]).first
+        label = cta.inner_text(timeout=10000).strip()
+    except Exception as e:
+        return False, f"CTA illisible ({type(e).__name__}) — on ne clique pas"
+
+    low = label.lower()
+    if any(t in low for t in BUY_CTA_TEXTS):
+        return False, f"CTA = {label!r} → offre payante"
+    if not any(t in low for t in FREE_CTA_TEXTS):
+        return False, f"CTA inattendu = {label!r} → on s'abstient"
+
+    # Deuxième signal : le bloc d'achat autour du bouton doit annoncer "Gratuit".
+    try:
+        block = cta.evaluate(
+            "e => { let n = e;"
+            " for (let i = 0; i < 6 && n.parentElement; i++) n = n.parentElement;"
+            " return n.innerText; }"
+        )
+    except Exception as e:
+        return False, f"bloc d'achat illisible ({type(e).__name__})"
+
+    if not any(m in block.lower() for m in FREE_MARKERS):
+        extract = " / ".join(l.strip() for l in block.split("\n") if l.strip())[:120]
+        return False, f"pas de mention de gratuité dans le bloc d'achat : {extract!r}"
+
+    return True, label
 
 
 def _detect_captcha(page) -> bool:
@@ -200,6 +253,14 @@ class Claimer:
             if _detect_owned(page):
                 print("[CLAIM] Déjà dans la bibliothèque.")
                 return ClaimOutcome.OWNED, ""
+
+            # 0. Garde-fou prix — rien n'est cliqué tant que ce n'est pas à 0 €
+            is_free, why = _is_free_offer(page)
+            if not is_free:
+                print(f"[CLAIM] ⛔ ABANDON — {why}")
+                _shot(page, "not_free")
+                return ClaimOutcome.NOT_FREE, why
+            print(f"[CLAIM] Prix vérifié : gratuit (CTA {why!r})")
 
             # 1. Click "Obtenir"
             page.locator(SELECTORS["purchase_cta"]).first.click(timeout=10000)
