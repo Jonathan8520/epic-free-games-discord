@@ -139,10 +139,22 @@ def _is_free_offer(page) -> tuple[bool, str]:
 
 
 def _detect_captcha(page) -> bool:
+    """hCaptcha (iframe de paiement) OU Turnstile Cloudflare (interstitiel Epic).
+
+    Le Turnstile est servi par Epic lui-même sur une page "Encore une étape /
+    Remplissez l'enquête de sécurité" dès qu'on charge le store avec une session
+    authentifiée depuis une IP datacenter. Vérifié le 2026-08-09 sur Azure ET
+    sur Oracle : il ne se résout jamais seul, sondé pendant 90 s.
+    """
     for frame in page.frames:
-        if "hcaptcha.com" in frame.url or "captcha-delivery.com" in frame.url:
+        if any(d in frame.url for d in ("hcaptcha.com", "captcha-delivery.com",
+                                        "challenges.cloudflare.com")):
             return True
-    return False
+    try:
+        return page.title().strip().lower() in ("un instant…", "un instant...",
+                                                "just a moment…", "just a moment...")
+    except Exception:
+        return False
 
 
 def _shot(page, name: str) -> None:
@@ -257,6 +269,13 @@ class Claimer:
             # 0. Garde-fou prix — rien n'est cliqué tant que ce n'est pas à 0 €
             is_free, why = _is_free_offer(page)
             if not is_free:
+                # Distinguer "offre payante" de "page jamais rendue" : sinon le
+                # footer Discord annonce "plus gratuit" alors que le vrai motif
+                # est un challenge Cloudflare, et on cherche au mauvais endroit.
+                if _detect_captcha(page):
+                    print("[CLAIM] ⛔ Challenge Cloudflare — claim impossible ici")
+                    _shot(page, "challenge")
+                    return ClaimOutcome.CAPTCHA, "Turnstile Cloudflare sur la page produit"
                 print(f"[CLAIM] ⛔ ABANDON — {why}")
                 _shot(page, "not_free")
                 return ClaimOutcome.NOT_FREE, why
