@@ -1,0 +1,37 @@
+name: Test Cloudflare (runner GitHub)
+
+# Rejoue test_cloudflare.py sur un runner GitHub hosted (IP Azure) pour savoir
+# si Cloudflare y sert toujours un challenge. La preuve du blocage date de mai
+# 2026 ; si Azure passe désormais, la VM Oracle self-hosted devient inutile.
+#
+# Aucun secret n'est nécessaire : on ne fait que charger des pages publiques.
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install Playwright
+        run: |
+          pip install playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Charge le store Epic
+        run: python test_cloudflare.py
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloudflare-screenshots
+          path: cloudflare_test_*.png
+          if-no-files-found: ignore
