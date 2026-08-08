@@ -1,0 +1,29 @@
+name: Test recap Discord
+
+# Lance test_recap.py depuis Actions, seul endroit où le secret DISCORD_WEBHOOK
+# est lisible (l'API GitHub ne permet pas de relire un secret, uniquement de
+# l'écrire). Sert à valider que Discord accepte le bouton lien du récapitulatif.
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      # Playwright n'est pas nécessaire ici, on évite les ~300 Mo de Chromium.
+      - name: Install dependencies
+        run: pip install requests python-dotenv
+
+      - name: Envoie le récap de test
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          ROLE_ID        : ${{ secrets.ROLE_ID }}
+        run: python test_recap.py --send

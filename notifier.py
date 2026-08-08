@@ -23,12 +23,23 @@ def _ts(iso_date: str | None) -> int | None:
         return None
 
 
-def _post(webhook_url: str, payload: dict):
+def _post(webhook_url: str, payload: dict, with_components: bool = False) -> bool:
+    """Envoie le payload. with_components=True est requis pour qu'un webhook
+    non applicatif (webhook de salon classique) accepte le champ `components` ;
+    sans ce paramètre Discord l'ignore silencieusement."""
+    url = webhook_url
+    if with_components:
+        url += ("&" if "?" in url else "?") + "with_components=true"
     try:
-        resp = requests.post(webhook_url, json=payload, timeout=10)
+        resp = requests.post(url, json=payload, timeout=10)
         resp.raise_for_status()
+        return True
     except requests.RequestException as e:
-        log.error(f"[NOTIFIER] Échec envoi webhook : {e}")
+        detail = ""
+        if e.response is not None:
+            detail = f" — {e.response.text[:200]}"
+        log.error(f"[NOTIFIER] Échec envoi webhook : {e}{detail}")
+        return False
 
 
 CLAIM_FOOTERS = {
@@ -201,8 +212,8 @@ def notify_mobile_game(game: dict, upcoming: bool = False):
     })
 
     embed = {
+        # Pas de description : discover/home ne renvoie pas de synopsis.
         "title"      : f"{'🔜📱' if upcoming else '📱'} {title}",
-        "description": game.get("description", ""),
         "url"        : url,
         "color"      : 0x7F77DD if upcoming else 0x1ED760,
         "fields"     : fields,
@@ -276,5 +287,26 @@ def notify_recap(pc_games: list[dict], mobile_games: list[dict] | None = None):
         "fields": fields,
         "footer": {"text": "Epic Games Store • Récapitulatif du run"},
     }
-    _post(cfg.DISCORD_WEBHOOK, {"embeds": [embed]})
+    payload = {"embeds": [embed]}
+
+    if cart:
+        # Bouton lien (style 5) : non interactif, donc autorisé sur un webhook de
+        # salon tant qu'on passe ?with_components=true. Si Discord refuse quand
+        # même, le lien markdown reste présent dans l'embed ci-dessus.
+        payload["components"] = [{
+            "type": 1,
+            "components": [{
+                "type" : 2,
+                "style": 5,
+                "label": f"🛒 Tout réclamer ({len(pc_games)} jeux)",
+                "url"  : cart,
+            }],
+        }]
+        if _post(cfg.DISCORD_WEBHOOK, payload, with_components=True):
+            log.info(f"[NOTIFIER] Récap + bouton envoyé ({len(pc_games)} PC, {len(mobile_games)} mobile).")
+            return
+        log.warning("[NOTIFIER] Bouton refusé par Discord — repli sur l'embed seul.")
+        payload.pop("components")
+
+    _post(cfg.DISCORD_WEBHOOK, payload)
     log.info(f"[NOTIFIER] Récap envoyé ({len(pc_games)} PC, {len(mobile_games)} mobile).")
