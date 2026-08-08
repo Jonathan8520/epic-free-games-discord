@@ -51,6 +51,11 @@ HEADERS = {
 STORE_URL = "https://store.epicgames.com/{locale}/p/{slug}"
 
 
+def _title_key(title: str) -> str:
+    """Titre → identifiant stable, commun aux versions android et iOS."""
+    return "".join(c if c.isalnum() else "-" for c in title.lower()).strip("-")
+
+
 def _parse_date(value: str | None) -> datetime | None:
     if not value:
         return None
@@ -104,12 +109,18 @@ def _iter_offers(payload: dict):
             yield module, offer
 
 
-def _parse_offer(offer: dict, platform: str) -> dict | None:
-    """Transforme une offre brute en dict normalisé, ou None si pas de state Claim."""
+def _parse_offer(offer: dict, platform: str, claim: dict | None = None) -> dict | None:
+    """Transforme une offre brute en dict normalisé, ou None si pas de state Claim.
+
+    `claim` permet au caller d'imposer l'état Claim à décrire : une offre peut en
+    porter plusieurs (un actif + un programmé), et prendre le premier donnerait
+    les dates du mauvais. Par défaut on prend le premier trouvé.
+    """
     content = offer.get("content") or {}
     purchases = content.get("purchase") or []
 
-    claim = next((p for p in purchases if p.get("purchaseType") == "Claim"), None)
+    if claim is None:
+        claim = next((p for p in purchases if p.get("purchaseType") == "Claim"), None)
     if not claim:
         return None
 
@@ -122,10 +133,16 @@ def _parse_offer(offer: dict, platform: str) -> dict | None:
     starts_dt = _parse_date(starts)
     expires_dt = _parse_date(expires)
 
+    title = content.get("title", "Jeu inconnu")
     return {
         "id": offer.get("offerId", ""),
+        # Clé de dédup stable : l'offerId et le slug diffèrent entre android et
+        # iOS, donc les utiliser comme clé d'état re-notifie le même jeu dès
+        # qu'un des deux fetch échoue. Le titre, lui, est commun aux deux.
+        "key": _title_key(title),
+        "offer_ids": [offer.get("offerId", "")],
         "sandbox_id": offer.get("sandboxId", ""),
-        "title": content.get("title", "Jeu inconnu"),
+        "title": title,
         "slug": slug,
         "url": STORE_URL.format(locale=LOCALE, slug=slug) if slug else "",
         "urls": {platform: STORE_URL.format(locale=LOCALE, slug=slug)} if slug else {},
@@ -143,10 +160,13 @@ def _parse_offer(offer: dict, platform: str) -> dict | None:
 def _merge(results: list[dict], game: dict) -> None:
     """Fusionne les plateformes quand le même jeu est offert sur Android et iOS."""
     for existing in results:
-        if existing["title"] == game["title"]:
+        if existing["key"] == game["key"]:
             if game["platforms"] not in existing["platforms"]:
                 existing["platforms"] += f", {game['platforms']}"
             existing["urls"].update(game.get("urls") or {})
+            for oid in game.get("offer_ids") or []:
+                if oid and oid not in existing["offer_ids"]:
+                    existing["offer_ids"].append(oid)
             # lien principal : iOS en priorite, sinon Android
             existing["url"] = existing["urls"].get("ios") or existing["urls"].get("android") or existing["url"]
             return
@@ -177,9 +197,15 @@ def get_epic_mobile_games() -> list[dict]:
             if not game:
                 continue
 
-            # Garde-fou : ignore une offre dont la fenêtre est déjà passée
+            # Garde-fous de fenêtre : le module freeGame peut pré-charger le
+            # giveaway suivant avant la rotation. Sans le test sur `starts`, on
+            # l'annoncerait comme déjà réclamable — c'est scan_scheduled_claims
+            # qui doit s'en charger.
             expires = _parse_date(game["expires"])
             if expires and expires < now:
+                continue
+            starts = _parse_date(game["starts"])
+            if starts and starts > now:
                 continue
 
             _merge(results, game)
@@ -222,7 +248,7 @@ def scan_scheduled_claims() -> list[dict]:
                 if not effective or effective <= now:
                     continue
 
-                game = _parse_offer(offer, platform)
+                game = _parse_offer(offer, platform, claim=purchase)
                 if game:
                     _merge(upcoming, game)
 
@@ -231,9 +257,20 @@ def scan_scheduled_claims() -> list[dict]:
     return upcoming
 
 
+def state_keys(game: dict, prefix: str = "mobile") -> list[str]:
+    """Toutes les clés d'état sous lesquelles ce jeu a pu être enregistré.
+
+    La première est celle qu'on écrit ; les suivantes couvrent l'historique
+    (entrées `mobile_<offerId>` écrites avant le passage à la clé par titre).
+    """
+    keys = [f"{prefix}_{game['key']}"] if game.get("key") else []
+    keys += [f"{prefix}_{oid}" for oid in (game.get("offer_ids") or []) if oid]
+    return keys or [f"{prefix}_{game.get('id', '')}"]
+
+
 def get_new_mobile_games(games: list[dict], seen_ids: set) -> list[dict]:
-    """Filtre les jeux mobiles pas encore notifiés. (Signature inchangée.)"""
-    return [g for g in games if f"mobile_{g['id']}" not in seen_ids]
+    """Filtre les jeux mobiles pas encore notifiés, sous n'importe quelle clé."""
+    return [g for g in games if not any(k in seen_ids for k in state_keys(g))]
 
 
 if __name__ == "__main__":
