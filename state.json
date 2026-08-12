@@ -197,7 +197,19 @@
       "url": "https://store.epicgames.com/fr/p/cat-named-mojave-7e06ad",
       "notified_at": "2026-08-09T12:25:50.457910+00:00",
       "value": "8,99 €"
+    },
+    "upcoming_b467b7d3570e44c0b84e59475f4a5636": {
+      "title": "Cardpocalypse Standard Edition",
+      "url": "https://store.epicgames.com/fr/p/cardpocalypse",
+      "notified_at": "2026-08-12T15:03:55.141385+00:00",
+      "value": "23,99 €"
+    },
+    "mobile_next_beholder--conductor": {
+      "title": "Beholder: Conductor",
+      "url": "https://store.epicgames.com/fr/p/beholder-conductor-ios-fd106a",
+      "notified_at": "2026-08-12T15:03:56.746659+00:00",
+      "value": "6,29 €"
     }
   },
-  "last_check": "2026-08-12T14:11:54.219423+00:00"
+  "last_check": "2026-08-12T15:03:56.746677+00:00"
 }
