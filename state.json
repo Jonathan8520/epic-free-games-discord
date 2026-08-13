@@ -150,12 +150,6 @@
       "notified_at": "2026-08-03T23:58:44.969319+00:00",
       "value": "2,69 €"
     },
-    "upcoming_0e44600a079e419abbb291ccf5af9ee7": {
-      "title": "Caravan SandWitch",
-      "url": "https://store.epicgames.com/fr/p/caravan-sandwitch-05ff58",
-      "notified_at": "2026-08-05T12:46:05.204956+00:00",
-      "value": "24,99 €"
-    },
     "mobile_6b8b4dfd2c13437dad063ca2e8c8e9cb": {
       "title": "Mutazione",
       "url": "https://store.epicgames.com/fr/p/mutazione-android-bdb9c1",
@@ -215,7 +209,19 @@
       "url": "https://store.epicgames.com/fr/p/targeted-10-days-75a48c",
       "notified_at": "2026-08-12T21:22:35.916344+00:00",
       "value": "179,99 €"
+    },
+    "0e44600a079e419abbb291ccf5af9ee7": {
+      "title": "Caravan SandWitch",
+      "url": "https://store.epicgames.com/fr/p/caravan-sandwitch-05ff58",
+      "notified_at": "2026-08-13T15:47:31.620627+00:00",
+      "value": "24,99 €"
+    },
+    "mobile_beholder--conductor": {
+      "title": "Beholder: Conductor",
+      "url": "https://store.epicgames.com/fr/p/beholder-conductor-ios-fd106a",
+      "notified_at": "2026-08-13T15:47:35.096189+00:00",
+      "value": "6,29 €"
     }
   },
-  "last_check": "2026-08-13T14:14:03.043792+00:00"
+  "last_check": "2026-08-13T15:47:35.363033+00:00"
 }
