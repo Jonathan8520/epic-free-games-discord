@@ -231,24 +231,50 @@ def notify_mobile_game(game: dict, upcoming: bool = False):
 CART_URL = "https://store.epicgames.com/purchase?highlightColor=0078f2{offers}#/purchase/verify"
 
 
+def cart_offers(game: dict) -> list[tuple[str, str]]:
+    """Couples (namespace, offerId) réclamables au panier pour ce jeu.
+
+    PC : une seule offre. Mobile : une par plateforme, car iOS et Android sont
+    deux SKU distincts. Côté mobile le namespace s'appelle `sandbox_id` dans le
+    payload de l'API (c'est la même valeur — cf. claimer_api._resolve, qui lit
+    le namespace dans le champ sandboxId).
+    """
+    offers = [
+        (o.get("namespace", ""), o.get("id", ""))
+        for o in game.get("cart_offers") or []
+    ]
+    if not offers:
+        offers = [(game.get("namespace") or game.get("sandbox_id") or "", game.get("id", ""))]
+    return [(ns, oid) for ns, oid in offers if ns and oid]
+
+
 def build_cart_url(games: list[dict]) -> str | None:
     """
     Construit une URL de panier Epic pré-rempli avec plusieurs offres.
     Format : store.epicgames.com/purchase?offers=1-{namespace}-{offerId} (répétable).
-    Ne fonctionne que pour le PC : les offres mobiles se réclament dans l'app.
+    Marche aussi pour les giveaways mobiles : ils ont une page produit web avec
+    un panier, seule la *lecture* du jeu reste réservée au téléphone.
     """
-    parts = [
-        f"&offers=1-{g['namespace']}-{g['id']}"
-        for g in games
-        if g.get("namespace") and g.get("id")
-    ]
+    seen: set[tuple[str, str]] = set()
+    parts = []
+    for game in games:
+        for ns, oid in cart_offers(game):
+            if (ns, oid) in seen:
+                continue
+            seen.add((ns, oid))
+            parts.append(f"&offers=1-{ns}-{oid}")
     return CART_URL.format(offers="".join(parts)) if parts else None
+
+
+def _plural(n: int, singular: str, plural: str | None = None) -> str:
+    return f"{n} {singular if n < 2 else (plural or singular + 's')}"
 
 
 def notify_recap(pc_games: list[dict], mobile_games: list[dict] | None = None):
     """
     Message final du run : liste de tout ce qui est réclamable + un lien unique
-    qui ouvre le panier Epic avec tous les jeux PC dedans.
+    qui ouvre le panier Epic avec tout ce qui est réclamable dedans (PC comme
+    mobile : un giveaway mobile a une page produit web, donc une offre panier).
     """
     mobile_games = mobile_games or []
     if len(pc_games) + len(mobile_games) < 2:
@@ -268,17 +294,28 @@ def notify_recap(pc_games: list[dict], mobile_games: list[dict] | None = None):
 
     fields = [{"name": "À réclamer", "value": "\n".join(lines), "inline": False}]
 
-    cart = build_cart_url(pc_games)
+    in_cart = [g for g in pc_games + mobile_games if cart_offers(g)]
+    no_cart = [g for g in mobile_games if not cart_offers(g)]
+    cart    = build_cart_url(in_cart)
     if cart:
         fields.append({
             "name"  : "Tout réclamer d'un coup",
-            "value" : f"🛒 [Ouvrir le panier avec les {len(pc_games)} jeux PC]({cart})",
+            "value" : f"🛒 [Ouvrir le panier avec {_plural(len(in_cart), 'jeu', 'jeux')}]({cart})",
             "inline": False,
         })
-    if mobile_games:
+    if no_cart:
         fields.append({
             "name"  : "Mobile",
-            "value" : "À réclamer dans l'app Epic Games Store, le panier web ne les accepte pas.",
+            "value" : "À réclamer dans l'app Epic Games Store : "
+                      + ", ".join(g.get("title", "?") for g in no_cart)
+                      + " n'a pas d'offre acceptée par le panier web.",
+            "inline": False,
+        })
+    elif mobile_games:
+        fields.append({
+            "name"  : "Mobile",
+            "value" : "Les jeux mobiles sont dans le panier (iOS et Android comptent "
+                      "pour deux offres) — la partie se lance ensuite depuis l'app.",
             "inline": False,
         })
 
@@ -299,15 +336,15 @@ def notify_recap(pc_games: list[dict], mobile_games: list[dict] | None = None):
             "components": [{
                 "type" : 2,
                 "style": 5,
-                "label": f"🛒 Tout réclamer ({len(pc_games)} jeux)",
+                "label": f"🛒 Tout réclamer ({_plural(len(in_cart), 'jeu', 'jeux')})",
                 "url"  : cart,
             }],
         }]
         if _post(cfg.DISCORD_WEBHOOK, payload, with_components=True):
-            log.info(f"[NOTIFIER] Récap + bouton envoyé ({len(pc_games)} PC, {len(mobile_games)} mobile).")
+            log.info(f"[NOTIFIER] Récap + bouton envoyé ({len(pc_games)} PC, {len(mobile_games)} mobile, {len(in_cart)} au panier).")
             return
         log.warning("[NOTIFIER] Bouton refusé par Discord — repli sur l'embed seul.")
         payload.pop("components")
 
     _post(cfg.DISCORD_WEBHOOK, payload)
-    log.info(f"[NOTIFIER] Récap envoyé ({len(pc_games)} PC, {len(mobile_games)} mobile).")
+    log.info(f"[NOTIFIER] Récap envoyé ({len(pc_games)} PC, {len(mobile_games)} mobile, {len(in_cart)} au panier).")
