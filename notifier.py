@@ -231,21 +231,38 @@ def notify_mobile_game(game: dict, upcoming: bool = False):
 CART_URL = "https://store.epicgames.com/purchase?highlightColor=0078f2{offers}#/purchase/verify"
 
 
+CART_PLATFORM_PRIORITY = ("ios", "android")
+PLATFORM_LABELS = {"ios": "iOS", "android": "Android"}
+
+
+def pick_cart_offer(game: dict) -> dict | None:
+    """L'offre mobile à mettre au panier : iOS par défaut, Android en repli.
+
+    iOS et Android sont deux SKU distincts pour la même partie ; les réclamer
+    tous les deux ajouterait une ligne inutile au panier.
+    """
+    offers = game.get("cart_offers") or []
+    if not offers:
+        return None
+    return next(
+        (o for p in CART_PLATFORM_PRIORITY for o in offers if o.get("platform") == p),
+        offers[0],
+    )
+
+
 def cart_offers(game: dict) -> list[tuple[str, str]]:
     """Couples (namespace, offerId) réclamables au panier pour ce jeu.
 
-    PC : une seule offre. Mobile : une par plateforme, car iOS et Android sont
-    deux SKU distincts. Côté mobile le namespace s'appelle `sandbox_id` dans le
-    payload de l'API (c'est la même valeur — cf. claimer_api._resolve, qui lit
-    le namespace dans le champ sandboxId).
+    Un seul couple par jeu, PC comme mobile. Côté mobile le namespace s'appelle
+    `sandbox_id` dans le payload de l'API (c'est la même valeur — cf.
+    claimer_api._resolve, qui lit le namespace dans le champ sandboxId).
     """
-    offers = [
-        (o.get("namespace", ""), o.get("id", ""))
-        for o in game.get("cart_offers") or []
-    ]
-    if not offers:
-        offers = [(game.get("namespace") or game.get("sandbox_id") or "", game.get("id", ""))]
-    return [(ns, oid) for ns, oid in offers if ns and oid]
+    chosen = pick_cart_offer(game)
+    if chosen:
+        pairs = [(chosen.get("namespace", ""), chosen.get("id", ""))]
+    else:
+        pairs = [(game.get("namespace") or game.get("sandbox_id") or "", game.get("id", ""))]
+    return [(ns, oid) for ns, oid in pairs if ns and oid]
 
 
 def build_cart_url(games: list[dict]) -> str | None:
@@ -312,10 +329,12 @@ def notify_recap(pc_games: list[dict], mobile_games: list[dict] | None = None):
             "inline": False,
         })
     elif mobile_games:
+        picked = {(pick_cart_offer(g) or {}).get("platform") for g in mobile_games}
+        versions = " / ".join(PLATFORM_LABELS[p] for p in CART_PLATFORM_PRIORITY if p in picked)
         fields.append({
             "name"  : "Mobile",
-            "value" : "Les jeux mobiles sont dans le panier (iOS et Android comptent "
-                      "pour deux offres) — la partie se lance ensuite depuis l'app.",
+            "value" : (f"Au panier en version {versions}." if versions else "Au panier.")
+                      + " Le jeu se lance ensuite depuis l'app Epic Games Store.",
             "inline": False,
         })
 

@@ -61,7 +61,7 @@ def main():
     cart = build_cart_url(in_cart)
     print("URL panier :\n ", cart, "\n")
     print(f"{len(in_cart)} jeu(x) au panier pour {sum(len(cart_offers(g)) for g in games)} offres "
-          "(le mobile en pèse deux : iOS + Android).\n")
+          "(un seul SKU par jeu mobile : iOS, Android en repli).\n")
 
     if "--send" not in sys.argv:
         print("Dry-run. Relance avec --send pour envoyer sur Discord.")
