@@ -134,14 +134,25 @@ def _parse_offer(offer: dict, platform: str, claim: dict | None = None) -> dict 
     expires_dt = _parse_date(expires)
 
     title = content.get("title", "Jeu inconnu")
+    sandbox_id = offer.get("sandboxId", "")
+    offer_id = offer.get("offerId", "")
     return {
-        "id": offer.get("offerId", ""),
+        "id": offer_id,
         # Clé de dédup stable : l'offerId et le slug diffèrent entre android et
         # iOS, donc les utiliser comme clé d'état re-notifie le même jeu dès
         # qu'un des deux fetch échoue. Le titre, lui, est commun aux deux.
         "key": _title_key(title),
-        "offer_ids": [offer.get("offerId", "")],
-        "sandbox_id": offer.get("sandboxId", ""),
+        "offer_ids": [offer_id],
+        "sandbox_id": sandbox_id,
+        # Offres réclamables via le panier web. Le sandboxId EST le namespace
+        # (cf. claimer_api._resolve : pageSlug -> sandboxId -> namespace), donc
+        # un giveaway mobile s'ajoute au panier comme un jeu PC. On les garde
+        # par plateforme : iOS et Android sont deux SKU distincts, chacun avec
+        # son couple (sandboxId, offerId), et _merge n'en conserverait qu'un.
+        "cart_offers": (
+            [{"platform": platform, "namespace": sandbox_id, "id": offer_id}]
+            if sandbox_id and offer_id else []
+        ),
         "title": title,
         "slug": slug,
         "url": STORE_URL.format(locale=LOCALE, slug=slug) if slug else "",
@@ -167,6 +178,11 @@ def _merge(results: list[dict], game: dict) -> None:
             for oid in game.get("offer_ids") or []:
                 if oid and oid not in existing["offer_ids"]:
                     existing["offer_ids"].append(oid)
+            known = {(o["namespace"], o["id"]) for o in existing.get("cart_offers") or []}
+            for o in game.get("cart_offers") or []:
+                if (o["namespace"], o["id"]) not in known:
+                    existing.setdefault("cart_offers", []).append(o)
+                    known.add((o["namespace"], o["id"]))
             # lien principal : iOS en priorite, sinon Android
             existing["url"] = existing["urls"].get("ios") or existing["urls"].get("android") or existing["url"]
             return
@@ -176,7 +192,7 @@ def _merge(results: list[dict], game: dict) -> None:
 def get_epic_mobile_games() -> list[dict]:
     """
     Retourne les giveaways mobiles Epic actuellement réclamables.
-    Chaque item : { id, sandbox_id, title, slug, url, image, icon,
+    Chaque item : { id, sandbox_id, cart_offers, title, slug, url, image, icon,
                     platforms, worth, starts, expires }
     """
     results: list[dict] = []

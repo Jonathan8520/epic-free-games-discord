@@ -18,7 +18,7 @@ import sys
 if "--send" not in sys.argv:
     os.environ.setdefault("DISCORD_WEBHOOK", "https://discord.invalid/dry-run")
 
-from notifier import build_cart_url, notify_recap
+from notifier import _plural, build_cart_url, cart_offers, notify_recap
 
 # Deux vrais jeux hebdo (namespace + offerId réels) pour tester l'URL de panier.
 FAKE_PC = [
@@ -38,6 +38,8 @@ FAKE_PC = [
     },
 ]
 
+# Le mobile va aussi au panier (une offre par plateforme). Ces ids-là sont
+# inventés : l'URL affichée n'est donc cliquable que pour vérifier la forme.
 FAKE_MOBILE = [
     {
         "title": "A Guidebook Of Babel",
@@ -45,13 +47,21 @@ FAKE_MOBILE = [
             "android": "https://store.epicgames.com/fr/p/a-guidebook-of-babel-android-1f2a3b",
             "ios": "https://store.epicgames.com/fr/p/a-guidebook-of-babel-ios-31c4fd",
         },
+        "cart_offers": [
+            {"platform": "android", "namespace": "1f2a3b4c5d6e7f8091a2b3c4d5e6f708", "id": "a1b2c3d4e5f60718293a4b5c6d7e8f90"},
+            {"platform": "ios", "namespace": "31c4fd5e6a7b8c9d0e1f2a3b4c5d6e7f", "id": "0f1e2d3c4b5a69788796a5b4c3d2e1f0"},
+        ],
     }
 ]
 
 
 def main():
-    cart = build_cart_url(FAKE_PC)
+    games = FAKE_PC + FAKE_MOBILE
+    in_cart = [g for g in games if cart_offers(g)]
+    cart = build_cart_url(in_cart)
     print("URL panier :\n ", cart, "\n")
+    print(f"{len(in_cart)} jeu(x) au panier pour {sum(len(cart_offers(g)) for g in games)} offres "
+          "(le mobile en pèse deux : iOS + Android).\n")
 
     if "--send" not in sys.argv:
         print("Dry-run. Relance avec --send pour envoyer sur Discord.")
@@ -60,7 +70,7 @@ def main():
             "type": 1,
             "components": [{
                 "type": 2, "style": 5,
-                "label": f"🛒 Tout réclamer ({len(FAKE_PC)} jeux)",
+                "label": f"🛒 Tout réclamer ({_plural(len(in_cart), 'jeu', 'jeux')})",
                 "url": cart,
             }],
         }, indent=2))  # ensure_ascii : la console Windows est en cp1252
