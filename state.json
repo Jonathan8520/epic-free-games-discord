@@ -228,18 +228,6 @@
       "notified_at": "2026-08-20T15:22:59.566780+00:00",
       "value": "23,99 €"
     },
-    "upcoming_8401414902e84f2cb9afa9142f051d32": {
-      "title": "Breathedge",
-      "url": "https://store.epicgames.com/fr/p/breathedge",
-      "notified_at": "2026-08-20T15:22:59.912186+00:00",
-      "value": "24,99 €"
-    },
-    "upcoming_8f1fcf01e32e4fd4b2ae0a9737992760": {
-      "title": "Rival Stars Horse Racing : Desktop Edition",
-      "url": "https://store.epicgames.com/fr/p/rival-stars-horse-racing-dd09de",
-      "notified_at": "2026-08-20T15:23:00.172839+00:00",
-      "value": "22,39 €"
-    },
     "80c516035861475591b19dc1b917d9d0": {
       "title": "Bolmn",
       "url": "https://store.epicgames.com/fr/p/bolmn-aa2906",
@@ -257,7 +245,31 @@
       "url": "https://store.epicgames.com/fr/p/together-after-dark-fa0ce0",
       "notified_at": "2026-08-26T02:17:40.519158+00:00",
       "value": "2,69 €"
+    },
+    "8401414902e84f2cb9afa9142f051d32": {
+      "title": "Breathedge",
+      "url": "https://store.epicgames.com/fr/p/breathedge",
+      "notified_at": "2026-08-27T23:19:48.491744+00:00",
+      "value": "24,99 €"
+    },
+    "8f1fcf01e32e4fd4b2ae0a9737992760": {
+      "title": "Rival Stars Horse Racing : Desktop Edition",
+      "url": "https://store.epicgames.com/fr/p/rival-stars-horse-racing-dd09de",
+      "notified_at": "2026-08-27T23:19:48.860790+00:00",
+      "value": "22,39 €"
+    },
+    "upcoming_b8cc76ce7d6645f0a282b843a072cc78": {
+      "title": "Alone With You",
+      "url": "https://store.epicgames.com/fr/p/alone-with-you-028a15",
+      "notified_at": "2026-08-27T23:19:49.108423+00:00",
+      "value": "8,99 €"
+    },
+    "mobile_down-in-bermuda": {
+      "title": "Down in Bermuda",
+      "url": "https://store.epicgames.com/fr/p/down-in-bermuda-ios-f0d77a",
+      "notified_at": "2026-08-27T23:19:51.504316+00:00",
+      "value": "5,39 €"
     }
   },
-  "last_check": "2026-08-27T13:18:03.333345+00:00"
+  "last_check": "2026-08-27T23:19:51.754172+00:00"
 }
