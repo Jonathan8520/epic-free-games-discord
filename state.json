@@ -258,12 +258,6 @@
       "notified_at": "2026-08-27T23:19:48.860790+00:00",
       "value": "22,39 €"
     },
-    "upcoming_b8cc76ce7d6645f0a282b843a072cc78": {
-      "title": "Alone With You",
-      "url": "https://store.epicgames.com/fr/p/alone-with-you-028a15",
-      "notified_at": "2026-08-27T23:19:49.108423+00:00",
-      "value": "8,99 €"
-    },
     "mobile_down-in-bermuda": {
       "title": "Down in Bermuda",
       "url": "https://store.epicgames.com/fr/p/down-in-bermuda-ios-f0d77a",
@@ -281,7 +275,25 @@
       "url": "https://store.epicgames.com/fr/p/astral-ascent-b33bc2",
       "notified_at": "2026-09-03T14:47:17.586267+00:00",
       "value": "22,39 €"
+    },
+    "b8cc76ce7d6645f0a282b843a072cc78": {
+      "title": "Alone With You",
+      "url": "https://store.epicgames.com/fr/p/alone-with-you-028a15",
+      "notified_at": "2026-09-03T18:12:04.925522+00:00",
+      "value": "8,99 €"
+    },
+    "upcoming_c76046dddcdb43619c33ce0395941033": {
+      "title": "Luftrausers",
+      "url": "https://store.epicgames.com/fr/p/luftrausers-51e5e9",
+      "notified_at": "2026-09-03T18:12:05.528068+00:00",
+      "value": "8,99 €"
+    },
+    "mobile_evan-s-remains": {
+      "title": "Evan's Remains",
+      "url": "https://store.epicgames.com/fr/p/evans-remains-ios-e00ae0",
+      "notified_at": "2026-09-03T18:12:07.683199+00:00",
+      "value": "4,49 €"
     }
   },
-  "last_check": "2026-09-03T14:47:19.969134+00:00"
+  "last_check": "2026-09-03T18:12:08.250750+00:00"
 }
