@@ -216,7 +216,9 @@ def notify_mobile_game(game: dict, upcoming: bool = False):
         # Pas de description : discover/home ne renvoie pas de synopsis.
         "title"      : f"{'🔜📱' if upcoming else '📱'} {title}",
         "url"        : url,
-        "color"      : 0x7F77DD if upcoming else 0x1ED760,
+        # Rouge (et non le vert des embeds PC) : la barre latérale distingue
+        # au premier coup d'oeil un giveaway mobile d'un jeu PC.
+        "color"      : 0x7F77DD if upcoming else 0xED4245,
         "fields"     : fields,
         "footer"     : {"text": ("Epic Games Store Mobile • Bientôt gratuit • " if upcoming else "Epic Games Store Mobile • ") + platforms},
     }
