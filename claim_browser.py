@@ -26,6 +26,7 @@ import os
 import re
 import sys
 import tempfile
+import time
 from pathlib import Path
 from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
 
@@ -98,6 +99,32 @@ def _detect_owned(page) -> bool:
     return "bibliothèque" in t or "in library" in t or "owned" in t
 
 
+def _wait_cta_ready(page, timeout_ms: int = 30_000) -> str:
+    """Attend que le CTA porte enfin un libellé, et le retourne.
+
+    La page produit est une SPA : le bouton est attaché au DOM **vide**, puis
+    rempli une seconde plus tard. Playwright le considère prêt dès qu'il est
+    visible, donc `inner_text()` renvoie '' sans lever de timeout — et tout ce
+    qui suit lit une chaîne vide sur une page parfaitement saine. C'est ce qui
+    faisait répondre "CTA inattendu = ''" et s'abstenir (vu le 2026-09-09 sur
+    la VM Oracle, sur un jeu qui était en réalité déjà dans la bibliothèque).
+
+    Retourne '' si le libellé ne vient jamais — l'appelant distingue alors une
+    page bloquée (Turnstile) d'une offre payante.
+    """
+    deadline = time.monotonic() + timeout_ms / 1000
+    while time.monotonic() < deadline:
+        try:
+            label = page.locator(SELECTORS["purchase_cta"]).first.inner_text(
+                timeout=2000).strip()
+        except Exception:
+            label = ""
+        if label:
+            return label
+        page.wait_for_timeout(500)
+    return ""
+
+
 def _is_free_offer(page) -> tuple[bool, str]:
     """
     Revérifie que l'offre est bien à 0 € JUSTE AVANT de cliquer.
@@ -143,8 +170,13 @@ def _detect_captcha(page) -> bool:
 
     Le Turnstile est servi par Epic lui-même sur une page "Encore une étape /
     Remplissez l'enquête de sécurité" dès qu'on charge le store avec une session
-    authentifiée depuis une IP datacenter. Vérifié le 2026-08-09 sur Azure ET
-    sur Oracle : il ne se résout jamais seul, sondé pendant 90 s.
+    authentifiée. Il ne se résout jamais seul (sondé 90 s le 2026-08-09).
+
+    Ça dépend de l'IP, et pas de la même façon partout : le 2026-09-09, à
+    quelques minutes d'intervalle avec la même session et le même jeu, GitHub
+    Actions (Azure) restait sur "Un instant…" pendant 90 s là où la VM Oracle
+    chargeait la page complète et lisait son CTA. Ne pas généraliser depuis un
+    seul hébergeur.
     """
     for frame in page.frames:
         if any(d in frame.url for d in ("hcaptcha.com", "captcha-delivery.com",
@@ -261,6 +293,12 @@ class Claimer:
         try:
             page.goto(url, wait_until="domcontentloaded", timeout=20000)
             print(f"[CLAIM] {url}")
+
+            # domcontentloaded ne garantit que le squelette : sans cette
+            # attente, tout ce qui suit lit un CTA vide (cf. _wait_cta_ready).
+            label = _wait_cta_ready(page)
+            print(f"[CLAIM] CTA = {label!r}" if label
+                  else "[CLAIM] CTA toujours vide après 30 s")
 
             if _detect_owned(page):
                 print("[CLAIM] Déjà dans la bibliothèque.")
