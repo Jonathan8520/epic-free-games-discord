@@ -9,3 +9,4 @@ debug_*.png
 _har_capture.har
 _har_capture*.har
 *.har
+temp/
