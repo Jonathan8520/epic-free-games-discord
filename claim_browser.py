@@ -28,7 +28,14 @@ import sys
 import tempfile
 import time
 from pathlib import Path
-from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
+
+# Moteur furtif optionnel : patchright expose la même API que playwright, avec
+# un Chromium patché qui n'expose pas les marqueurs d'automatisation (fuite CDP
+# Runtime.enable notamment). EPIC_STEALTH=1 pour l'utiliser.
+if os.environ.get("EPIC_STEALTH") == "1":
+    from patchright.sync_api import sync_playwright, TimeoutError as PWTimeout
+else:
+    from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
 
 STATE_FILE  = Path(__file__).parent / "epic_storage_state.json"
 PROFILE_DIR = Path(__file__).parent / ".pw_profile"
@@ -36,6 +43,22 @@ PROFILE_DIR = Path(__file__).parent / ".pw_profile"
 # Détecte si on tourne en CI (GH Actions, etc.) — change headless + screenshots
 IS_CI = bool(os.environ.get("CI") or os.environ.get("GITHUB_ACTIONS"))
 DEBUG_CLAIM = os.environ.get("DEBUG_CLAIM") == "1"
+
+# Chromium AVEC fenêtre (sous Xvfb sur un serveur sans écran). Mesuré le
+# 2026-09-10 depuis la VM Oracle : en headless, le chemin de paiement
+# /purchase renvoie 403 alors même que la page produit se charge normalement ;
+# en fenêtre il répond 200 et l'écran "Ajouter à la bibliothèque" s'affiche.
+# En fenêtre on garde l'UA native : l'UA maquillée ne sert qu'à masquer le
+# marqueur "HeadlessChrome" du mode headless, et mentir sur l'OS déclenche des
+# incohérences avec les Client Hints.
+HEADFUL = os.environ.get("EPIC_HEADFUL") == "1"
+
+# EPIC_WAIT_HUMAN=<secondes> : laisse la fenêtre ouverte pour qu'un humain
+# résolve l'enquête de sécurité d'Epic (hCaptcha à images) via VNC. Le jeton
+# hCaptcha est à usage unique et valable ~120 s : impossible de le mettre en
+# cache d'une semaine sur l'autre, seul un humain devant l'écran le produit.
+# L'enjeu du mode : savoir si Epic cesse de réclamer l'enquête ensuite.
+WAIT_HUMAN = int(os.environ.get("EPIC_WAIT_HUMAN") or 0)
 
 SELECTORS = {
     "purchase_cta"   : '[data-testid="purchase-cta-button"]',
@@ -189,6 +212,23 @@ def _detect_captcha(page) -> bool:
         return False
 
 
+# Cookies posés par Cloudflare (laissez-passer + score anti-bot). À NE JAMAIS
+# transporter d'un run à l'autre : cf_clearance est lié à l'IP/UA/navigateur
+# qui l'a obtenu, et __cf_bm porte le score attribué lors d'un passage
+# précédent. Réinjectés, ils déclenchent l'interstitiel "Un instant…".
+# Mesuré le 2026-09-10, même session, même IP Oracle, même minute : avec ces
+# cookies → challenge ; sans eux → page chargée et compte connecté. Le
+# navigateur regagne de lui-même un laissez-passer neuf à chaque run.
+# (C'était la vraie cause du blocage depuis mai, pas l'IP de datacenter.)
+CF_COOKIE_PREFIXES = ("cf_", "__cf", "_cfuvid")
+
+
+def _strip_cloudflare(state: dict) -> dict:
+    cookies = state.get("cookies") or []
+    kept = [c for c in cookies if not c.get("name", "").startswith(CF_COOKIE_PREFIXES)]
+    return {**state, "cookies": kept}
+
+
 def _shot(page, name: str) -> None:
     if DEBUG_CLAIM:
         try:
@@ -215,23 +255,26 @@ class Claimer:
         context_kwargs = dict(
             locale="fr-FR",
             viewport={"width": 1280, "height": 800},
-            user_agent=UA,
         )
+        if not HEADFUL:
+            context_kwargs["user_agent"] = UA
 
         if b64:
             # Mode CI / prod : storage_state depuis base64 → fichier temp.
             # Strip espaces/BOM/newlines (peut être pollué par l'encoding du shell qui a set le secret)
             b64_clean = b64.strip().lstrip("﻿").replace("\r", "").replace("\n", "")
             self._state_tmp = Path(tempfile.mkdtemp()) / "epic_storage_state.json"
-            self._state_tmp.write_bytes(base64.b64decode(b64_clean, validate=False))
-            browser = self._pw.chromium.launch(headless=True, args=launch_args)
+            state = json.loads(base64.b64decode(b64_clean, validate=False))
+            self._state_tmp.write_text(json.dumps(_strip_cloudflare(state)), encoding="utf-8")
+            browser = self._pw.chromium.launch(headless=not HEADFUL, args=launch_args)
             self._context = browser.new_context(storage_state=str(self._state_tmp), **context_kwargs)
             self._browser = browser
             print(f"[CLAIMER] Mode CI (storage_state b64, {self._state_tmp.stat().st_size} bytes)")
         elif state_file_env and Path(state_file_env).exists():
             # Mode local prod-like : storage_state.json explicite
             browser = self._pw.chromium.launch(headless=not DEBUG_CLAIM, args=launch_args)
-            self._context = browser.new_context(storage_state=state_file_env, **context_kwargs)
+            state = json.loads(Path(state_file_env).read_text(encoding="utf-8"))
+            self._context = browser.new_context(storage_state=_strip_cloudflare(state), **context_kwargs)
             self._browser = browser
             print(f"[CLAIMER] Mode local prod-like ({state_file_env})")
         elif PROFILE_DIR.exists():
@@ -258,7 +301,7 @@ class Claimer:
     def __exit__(self, exc_type, exc_val, exc_tb):
         try:
             # Dump le state mis à jour (cookies rotés par Epic au cours du run)
-            state = self._context.storage_state()
+            state = _strip_cloudflare(self._context.storage_state())
             state_json = json.dumps(state)
             self.new_storage_state_b64 = base64.b64encode(state_json.encode()).decode()
             # Si on était en mode local, on persiste aussi sur disque
@@ -320,45 +363,74 @@ class Claimer:
             print(f"[CLAIM] Prix vérifié : gratuit (CTA {why!r})")
 
             # 1. Click "Obtenir"
-            page.locator(SELECTORS["purchase_cta"]).first.click(timeout=10000)
+            # no_wait_after : Epic programme une navigation qui n'aboutit jamais
+            # (le paiement s'ouvre en surcouche), et Playwright resterait sinon
+            # bloqué sur "waiting for scheduled navigations to finish".
+            page.locator(SELECTORS["purchase_cta"]).first.click(
+                timeout=10000, no_wait_after=True)
 
-            # 2. Popup "device not supported" (parfois)
-            try:
-                page.locator(SELECTORS["device_continue"]).last.click(timeout=3000)
-            except PWTimeout:
-                pass
+            # 2. Popup "Appareil non compatible" : en UA native le navigateur
+            # s'annonce Linux, et Epic demande confirmation pour un jeu Windows.
+            # Visé par son texte — les classes CSS de device_continue sont
+            # générées et changent au gré des déploiements d'Epic.
+            if _click_button_by_text(page, ["Continuer", "Continue"], timeout_ms=4000):
+                print("[CLAIM] Popup 'Appareil non compatible' → Continuer")
+            else:
+                try:
+                    page.locator(SELECTORS["device_continue"]).last.click(timeout=2000)
+                except PWTimeout:
+                    pass
 
             # 3. Iframe checkout
-            iframe_handle = page.wait_for_selector(SELECTORS["iframe"], timeout=15000)
+            iframe_handle = page.wait_for_selector(SELECTORS["iframe"], timeout=30000)
             frame = iframe_handle.content_frame()
             if not frame:
                 return ClaimOutcome.FAILED, "Iframe checkout introuvable"
 
-            # 4. Click "Ajouter à la bibliothèque"
+            # 4-5. Écran de paiement. Deux boutons s'y succèdent dans un ordre
+            # variable : "Ajouter à la bibliothèque", puis le cartouche
+            # "Informations sur le droit de rétractation" (J'accepte) qui le
+            # RECOUVRE. Les traiter en deux étapes séparées faisait tourner le
+            # bot sur un bouton devenu inaccessible pendant que le cartouche
+            # attendait derrière (mesuré le 2026-09-14, capture à l'appui).
+            # Une seule boucle essaie donc les deux à chaque tour, jusqu'à ce que
+            # l'iframe se ferme — ce qui signe la fin du claim.
             page.wait_for_timeout(3000)
             _shot(page, "iframe")
-            if not _click_button_by_text(frame, PLACE_ORDER_TEXTS, timeout_ms=10000):
+            deadline = time.monotonic() + max(45, WAIT_HUMAN)
+            clicked = []
+            signale = False
+            while time.monotonic() < deadline:
+                handle = page.query_selector(SELECTORS["iframe"])
+                if not handle:
+                    break                       # iframe fermée → claim finalisé
+                frame_now = handle.content_frame()
+                if frame_now:
+                    # EULA d'abord : quand il s'affiche, il est au-dessus du reste.
+                    if _click_button_by_text(frame_now, EULA_AGREE_TEXTS, timeout_ms=800):
+                        clicked.append("J'accepte")
+                        page.wait_for_timeout(2000)
+                    elif _click_button_by_text(frame_now, PLACE_ORDER_TEXTS, timeout_ms=800):
+                        clicked.append("Ajouter à la bibliothèque")
+                        page.wait_for_timeout(2000)
+                if WAIT_HUMAN and not signale and _detect_captcha(page):
+                    signale = True
+                    print("[CLAIM] ⏳ Enquête de sécurité affichée — à résoudre à la main "
+                          f"({int(deadline - time.monotonic())} s restantes)", flush=True)
+                page.wait_for_timeout(1000)
+            print(f"[CLAIM] Boutons cliqués : {sorted(set(clicked)) or 'aucun'}")
+            if not clicked:
                 _shot(page, "no_button")
                 if _detect_captcha(page):
                     return ClaimOutcome.CAPTCHA, "hCaptcha bloque le bouton principal"
                 return ClaimOutcome.TIMEOUT, "Bouton principal introuvable"
 
-            # 5. EULA — polling jusqu'à 8s car Epic le présente avec un délai variable
-            for attempt in range(8):
-                page.wait_for_timeout(1000)
-                iframe_handle = page.query_selector(SELECTORS["iframe"])
-                if not iframe_handle:
-                    break  # iframe fermée → claim finalisé
-                frame_current = iframe_handle.content_frame()
-                if frame_current and _click_button_by_text(frame_current, EULA_AGREE_TEXTS, timeout_ms=500):
-                    page.wait_for_timeout(2000)
-                    break
-
             # 6. Wait + refresh + vérification
             page.wait_for_timeout(3000)
             _shot(page, "after_claim")
             page.goto(url, wait_until="domcontentloaded", timeout=20000)
-            page.wait_for_timeout(3000)
+            final = _wait_cta_ready(page)   # sinon CTA vide → faux échec
+            print(f"[CLAIM] CTA après refresh = {final!r}")
             _shot(page, "final")
 
             if _detect_owned(page):
