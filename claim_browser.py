@@ -188,6 +188,54 @@ def _is_free_offer(page) -> tuple[bool, str]:
     return True, label
 
 
+CAPTCHA_HOSTS = ("hcaptcha.com", "captcha-delivery.com", "challenges.cloudflare.com")
+
+
+def _visible_captcha_frames(page) -> list:
+    """Les iframes de captcha réellement AFFICHÉES.
+
+    hCaptcha charge toujours une iframe invisible, même quand il laisse passer :
+    la compter faisait répondre "hCaptcha bloque le bouton" à chaque échec, quel
+    qu'en soit le vrai motif (vu le 2026-09-14, où le blocage venait en fait du
+    cartouche de rétractation). On exige donc une iframe visible et de taille
+    réelle.
+    """
+    out = []
+    for frame in page.frames:
+        if not any(h in (frame.url or "") for h in CAPTCHA_HOSTS):
+            continue
+        try:
+            el = frame.frame_element()
+            box = el.bounding_box() if el.is_visible() else None
+        except Exception:
+            continue
+        if box and box.get("height", 0) >= 40 and box.get("width", 0) >= 40:
+            out.append(frame)
+    return out
+
+
+def _try_captcha_checkbox(page) -> str:
+    """Coche la case « je suis humain » quand l'enquête n'a pas d'images.
+
+    Epic en présente deux, distinctes (observé le 2026-09-17) : une simple case
+    à cocher, franchissable d'un clic — c'est celle-ci — puis un défi à images
+    après "Ajouter à la bibliothèque", qui exige un humain.
+
+    Retourne ce qui a été cliqué, '' si rien de cliquable n'a été trouvé.
+    """
+    for frame in _visible_captcha_frames(page):
+        for sel in ("#checkbox", "#anchor", "[role=checkbox]", "input[type=checkbox]"):
+            try:
+                loc = frame.locator(sel).first
+                if loc.count() and loc.is_visible():
+                    loc.click(timeout=3000)
+                    host = (frame.url or "").split("/")[2]
+                    return f"{sel} @ {host}"
+            except Exception:
+                continue
+    return ""
+
+
 def _detect_captcha(page) -> bool:
     """hCaptcha (iframe de paiement) OU Turnstile Cloudflare (interstitiel Epic).
 
@@ -201,10 +249,8 @@ def _detect_captcha(page) -> bool:
     chargeait la page complète et lisait son CTA. Ne pas généraliser depuis un
     seul hébergeur.
     """
-    for frame in page.frames:
-        if any(d in frame.url for d in ("hcaptcha.com", "captcha-delivery.com",
-                                        "challenges.cloudflare.com")):
-            return True
+    if _visible_captcha_frames(page):
+        return True
     try:
         return page.title().strip().lower() in ("un instant…", "un instant...",
                                                 "just a moment…", "just a moment...")
@@ -362,6 +408,13 @@ class Claimer:
                 return ClaimOutcome.NOT_FREE, why
             print(f"[CLAIM] Prix vérifié : gratuit (CTA {why!r})")
 
+            # 0 bis. Enquête de sécurité à case unique : on la coche nous-mêmes.
+            hit = _try_captcha_checkbox(page)
+            if hit:
+                print(f"[CLAIM] Case anti-robot cochée ({hit})", flush=True)
+                _shot(page, "captcha_case")
+                page.wait_for_timeout(3000)
+
             # 1. Click "Obtenir"
             # no_wait_after : Epic programme une navigation qui n'aboutit jamais
             # (le paiement s'ouvre en surcouche), et Playwright resterait sinon
@@ -404,6 +457,12 @@ class Claimer:
                 handle = page.query_selector(SELECTORS["iframe"])
                 if not handle:
                     break                       # iframe fermée → claim finalisé
+                hit = _try_captcha_checkbox(page)
+                if hit:
+                    print(f"[CLAIM] Case anti-robot cochée ({hit})", flush=True)
+                    _shot(page, "captcha_case")
+                    page.wait_for_timeout(3000)
+
                 frame_now = handle.content_frame()
                 if frame_now:
                     # EULA d'abord : quand il s'affiche, il est au-dessus du reste.
@@ -415,14 +474,28 @@ class Claimer:
                         page.wait_for_timeout(2000)
                 if WAIT_HUMAN and not signale and _detect_captcha(page):
                     signale = True
+                    _shot(page, "survey")
                     print("[CLAIM] ⏳ Enquête de sécurité affichée — à résoudre à la main "
                           f"({int(deadline - time.monotonic())} s restantes)", flush=True)
                 page.wait_for_timeout(1000)
             print(f"[CLAIM] Boutons cliqués : {sorted(set(clicked)) or 'aucun'}")
             if not clicked:
                 _shot(page, "no_button")
+                # Le bot n'a rien cliqué, mais quelqu'un a pu finir l'achat à la
+                # main pendant l'enquête de sécurité. Vu le 2026-09-17 sur Shogun
+                # Showdown : jeu bien obtenu, rapporté en échec — ce qui, en prod,
+                # enverrait un "auto-claim échoué" pour un jeu acquis.
+                try:
+                    page.goto(url, wait_until="domcontentloaded", timeout=20000)
+                    verif = _wait_cta_ready(page)
+                    print(f"[CLAIM] CTA après vérification = {verif!r}")
+                    if _detect_owned(page):
+                        print("[CLAIM] ✅ SUCCESS (finalisé à la main pendant l'enquête)")
+                        return ClaimOutcome.SUCCESS, ""
+                except PWTimeout:
+                    pass
                 if _detect_captcha(page):
-                    return ClaimOutcome.CAPTCHA, "hCaptcha bloque le bouton principal"
+                    return ClaimOutcome.CAPTCHA, "enquête de sécurité non résolue"
                 return ClaimOutcome.TIMEOUT, "Bouton principal introuvable"
 
             # 6. Wait + refresh + vérification
