@@ -300,18 +300,6 @@
       "notified_at": "2026-09-10T15:37:17.949229+00:00",
       "value": "24,50 €"
     },
-    "upcoming_8a20c6c8d5b5417e800c687e9d72013e": {
-      "title": "Mindcop",
-      "url": "https://store.epicgames.com/fr/p/mindcop-78e6c1",
-      "notified_at": "2026-09-10T15:37:18.288437+00:00",
-      "value": "14,99 €"
-    },
-    "upcoming_b9ff3f98367a45cdac289dff6683a2bc": {
-      "title": "Shogun Showdown",
-      "url": "https://store.epicgames.com/fr/p/shogun-showdown-61832d",
-      "notified_at": "2026-09-10T15:37:18.545742+00:00",
-      "value": "13,49 €"
-    },
     "mobile_alone-with-you": {
       "title": "Alone With You",
       "url": "https://store.epicgames.com/fr/p/alone-with-you-ios-a1f287",
@@ -329,7 +317,31 @@
       "url": "https://store.epicgames.com/fr/p/mechabellum-88a843",
       "notified_at": "2026-09-16T13:14:10.121142+00:00",
       "value": "14,79 €"
+    },
+    "8a20c6c8d5b5417e800c687e9d72013e": {
+      "title": "Mindcop",
+      "url": "https://store.epicgames.com/fr/p/mindcop-78e6c1",
+      "notified_at": "2026-09-17T17:49:31.012688+00:00",
+      "value": "14,99 €"
+    },
+    "b9ff3f98367a45cdac289dff6683a2bc": {
+      "title": "Shogun Showdown",
+      "url": "https://store.epicgames.com/fr/p/shogun-showdown-61832d",
+      "notified_at": "2026-09-17T17:49:31.740050+00:00",
+      "value": "13,49 €"
+    },
+    "upcoming_7c14bf0cffdd43be968fdcf28e5af653": {
+      "title": "Astrea Six Sided Oracles",
+      "url": "https://store.epicgames.com/fr/p/astrea-six-sided-oracles-33c949",
+      "notified_at": "2026-09-17T17:49:31.935476+00:00",
+      "value": "22,39 €"
+    },
+    "mobile_mindcop": {
+      "title": "Mindcop",
+      "url": "https://store.epicgames.com/fr/p/mindcop-ios-11d53d",
+      "notified_at": "2026-09-17T17:49:34.276045+00:00",
+      "value": "5,39 €"
     }
   },
-  "last_check": "2026-09-17T13:53:38.155350+00:00"
+  "last_check": "2026-09-17T17:49:34.579208+00:00"
 }
