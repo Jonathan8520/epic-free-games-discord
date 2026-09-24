@@ -312,12 +312,6 @@
       "notified_at": "2026-09-14T15:22:25.880841+00:00",
       "value": "4,49 €"
     },
-    "upcoming_6d99eae44d724baf84d6261a7a0f05d2": {
-      "title": "Mechabellum",
-      "url": "https://store.epicgames.com/fr/p/mechabellum-88a843",
-      "notified_at": "2026-09-16T13:14:10.121142+00:00",
-      "value": "14,79 €"
-    },
     "8a20c6c8d5b5417e800c687e9d72013e": {
       "title": "Mindcop",
       "url": "https://store.epicgames.com/fr/p/mindcop-78e6c1",
@@ -330,18 +324,42 @@
       "notified_at": "2026-09-17T17:49:31.740050+00:00",
       "value": "13,49 €"
     },
-    "upcoming_7c14bf0cffdd43be968fdcf28e5af653": {
-      "title": "Astrea Six Sided Oracles",
-      "url": "https://store.epicgames.com/fr/p/astrea-six-sided-oracles-33c949",
-      "notified_at": "2026-09-17T17:49:31.935476+00:00",
-      "value": "22,39 €"
-    },
     "mobile_mindcop": {
       "title": "Mindcop",
       "url": "https://store.epicgames.com/fr/p/mindcop-ios-11d53d",
       "notified_at": "2026-09-17T17:49:34.276045+00:00",
       "value": "5,39 €"
+    },
+    "7c14bf0cffdd43be968fdcf28e5af653": {
+      "title": "Astrea Six Sided Oracles",
+      "url": "https://store.epicgames.com/fr/p/astrea-six-sided-oracles-33c949",
+      "notified_at": "2026-09-24T17:45:03.994201+00:00",
+      "value": "22,39 €"
+    },
+    "6d99eae44d724baf84d6261a7a0f05d2": {
+      "title": "Mechabellum",
+      "url": "https://store.epicgames.com/fr/p/mechabellum-88a843",
+      "notified_at": "2026-09-24T17:45:04.383104+00:00",
+      "value": "14,79 €"
+    },
+    "upcoming_7ae00c3e89174012b175cc73b4737723": {
+      "title": "System Shock 2: 25th Anniversary Remaster",
+      "url": "https://store.epicgames.com/fr/p/system-shock-2-25th-anniversary-remaster-cb94d9",
+      "notified_at": "2026-09-24T17:45:04.744526+00:00",
+      "value": "26,99 €"
+    },
+    "upcoming_af4c34934afe4db0870b8a1d82dceb94": {
+      "title": "BURIED STARS",
+      "url": "https://store.epicgames.com/fr/p/buried-stars-d7c88c",
+      "notified_at": "2026-09-24T17:45:05.019136+00:00",
+      "value": "33,99 €"
+    },
+    "mobile_cardpocalypse": {
+      "title": "Cardpocalypse",
+      "url": "https://store.epicgames.com/fr/p/cardpocalypse-ios-46af9e",
+      "notified_at": "2026-09-24T17:45:07.743959+00:00",
+      "value": "5,39 €"
     }
   },
-  "last_check": "2026-09-24T12:59:17.640793+00:00"
+  "last_check": "2026-09-24T17:45:08.460434+00:00"
 }
