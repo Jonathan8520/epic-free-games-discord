@@ -60,6 +60,14 @@ HEADFUL = os.environ.get("EPIC_HEADFUL") == "1"
 # L'enjeu du mode : savoir si Epic cesse de réclamer l'enquête ensuite.
 WAIT_HUMAN = int(os.environ.get("EPIC_WAIT_HUMAN") or 0)
 
+# EPIC_CHROME_PROFILE=<dossier> : vrai Chrome (channel="chrome") dans un profil
+# persistant, sans viewport forcé. Ce sont les trois prescriptions de patchright,
+# qu'on n'avait jamais appliquées ensemble — le test du 2026-09-10, qui concluait
+# "patchright ne change rien", les neutralisait toutes les trois. Le mainteneur
+# de free-games-claimer est explicite : "you really need Chrome to not get the
+# epic-games captcha, Chromium wasn't enough".
+CHROME_PROFILE = os.environ.get("EPIC_CHROME_PROFILE")
+
 SELECTORS = {
     "purchase_cta"   : '[data-testid="purchase-cta-button"]',
     "device_continue": 'div.css-16r1tk9 div.css-15w5v2y-CTA button[type="button"]',
@@ -269,6 +277,16 @@ def _detect_captcha(page) -> bool:
 CF_COOKIE_PREFIXES = ("cf_", "__cf", "_cfuvid")
 
 
+def _load_state(b64: str | None, path: str | None) -> dict | None:
+    """Le storage_state, depuis la variable base64 ou depuis un fichier."""
+    if b64:
+        clean = "".join(b64.split()).lstrip(chr(65279))   # espaces, BOM, sauts de ligne
+        return json.loads(base64.b64decode(clean, validate=False))
+    if path and Path(path).exists():
+        return json.loads(Path(path).read_text(encoding="utf-8"))
+    return None
+
+
 def _strip_cloudflare(state: dict) -> dict:
     cookies = state.get("cookies") or []
     kept = [c for c in cookies if not c.get("name", "").startswith(CF_COOKIE_PREFIXES)]
@@ -305,7 +323,29 @@ class Claimer:
         if not HEADFUL:
             context_kwargs["user_agent"] = UA
 
-        if b64:
+        if CHROME_PROFILE:
+            # Profil persistant : launch_persistent_context n'accepte pas
+            # storage_state, il faut injecter les cookies après coup. Le profil
+            # garde ensuite localStorage, IndexedDB et cache d'un run à l'autre.
+            Path(CHROME_PROFILE).mkdir(parents=True, exist_ok=True)
+            persist_kwargs = dict(context_kwargs)
+            persist_kwargs.pop("viewport", None)
+            persist_kwargs.pop("user_agent", None)      # Chrome annonce le vrai
+            self._context = self._pw.chromium.launch_persistent_context(
+                user_data_dir=CHROME_PROFILE,
+                channel="chrome",
+                headless=not HEADFUL,
+                no_viewport=True,
+                args=launch_args,
+                **persist_kwargs,
+            )
+            self._browser = None
+            state = _load_state(b64, state_file_env)
+            if state and state.get("cookies"):
+                self._context.add_cookies(_strip_cloudflare(state)["cookies"])
+                print(f"[CLAIMER] {len(state['cookies'])} cookies injectés")
+            print(f"[CLAIMER] Chrome + profil persistant ({CHROME_PROFILE})")
+        elif b64:
             # Mode CI / prod : storage_state depuis base64 → fichier temp.
             # Strip espaces/BOM/newlines (peut être pollué par l'encoding du shell qui a set le secret)
             b64_clean = b64.strip().lstrip("﻿").replace("\r", "").replace("\n", "")
