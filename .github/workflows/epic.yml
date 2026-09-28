@@ -18,7 +18,7 @@ jobs:
 
     steps:
       - name: Checkout main
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: main
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -28,7 +28,7 @@ jobs:
         run: git checkout origin/datas -- state.json
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: "pip"
@@ -36,19 +36,23 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      # Chromium ne sert qu'à l'auto-claim, abandonné (AUTO_CLAIM=false). Ne pas
+      # l'installer évite d'appeler apt-get à chaque run : c'est l'étape qui
+      # casserait au passage d'ubuntu-latest à une nouvelle version d'Ubuntu.
       - name: Cache Playwright browsers
+        if: vars.AUTO_CLAIM == 'true'
         id: pw-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: pw-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
 
       - name: Install Chromium for Playwright
-        if: steps.pw-cache.outputs.cache-hit != 'true'
+        if: vars.AUTO_CLAIM == 'true' && steps.pw-cache.outputs.cache-hit != 'true'
         run: python -m playwright install --with-deps chromium
 
       - name: Install Chromium system deps (cache hit case)
-        if: steps.pw-cache.outputs.cache-hit == 'true'
+        if: vars.AUTO_CLAIM == 'true' && steps.pw-cache.outputs.cache-hit == 'true'
         run: python -m playwright install-deps chromium
 
       - name: Run bot
@@ -65,7 +69,7 @@ jobs:
 
       - name: Upload debug screenshots (on failure)
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: debug-screenshots
           path: debug_*.png
