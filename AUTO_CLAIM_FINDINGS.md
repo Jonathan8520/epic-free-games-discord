@@ -1,6 +1,46 @@
-# Auto-claim Epic — Findings & Décision en attente
+# Auto-claim Epic — Findings (archive)
 
-État au 2026-05-31.
+## Verdict final — septembre 2026 : abandonné
+
+Le bot reste un notificateur (`AUTO_CLAIM=false`). Tout ce qui suit ce verdict
+date de mai 2026 et n'est gardé que pour l'historique : les « options » et les
+« décisions à prendre » plus bas sont caduques.
+
+**Le vrai parcours d'un claim** (relevé sur le HAR d'un claim humain) : iframe
+`store.epicgames.com/purchase` → `payment-website-pci.ol.epicgames.com/v2/purchase/`
+(`initialize`, `order-preview`, `confirm-order`). Au clic « Ajouter à la
+bibliothèque », Talon (`talon-service-prod.ecosec.on.epicgames.com`, flow
+`checkout_free_prod`) envoie une empreinte du navigateur et de la télémétrie,
+puis hCaptcha Enterprise fournit le `captchaToken` à usage unique exigé par
+`confirm-order`.
+
+**Ce qui a été mesuré :**
+- Chez le propriétaire du compte (Chrome sous Windows, ligne perso), le captcha
+  est passif, même en navigation privée vierge.
+- Depuis une VM Oracle (Chrome sous Xvfb), le bot va jusqu'au bout du paiement,
+  mais tombe à chaque fois sur un défi à images. 3 jeux ont été obtenus ainsi
+  avec un humain qui résolvait le défi à distance (noVNC) : le reste de la
+  chaîne fonctionne.
+- Sans effet sur le défi : IP résidentielle (tunnel WireGuard vers la box),
+  Patchright, vrai Chrome avec profil persistant, état hCaptcha vierge (cookie
+  `hmt_id`, stockage `hcap_uj_e`), session Epic toute neuve transplantée depuis
+  une navigation privée.
+- La VM ne peut même pas se connecter à Epic : « Réponse incorrecte » malgré un
+  captcha résolu par un humain.
+- Leçon utile : ne jamais transporter les cookies Cloudflare (`cf_clearance`,
+  `__cf_bm`) d'une machine à l'autre. Ils sont liés à l'IP et déclenchent le mur
+  « Un instant… » (`_strip_cloudflare` dans `claim_browser.py`).
+
+**Voies écartées :** un solveur de captcha payant ; faire tourner le bot sur le
+PC du propriétaire, allumé en permanence (runner self-hosted). Jamais testé :
+une machine plus puissante que la VM (1/8 de cœur, saturée pendant le claim).
+
+**En pratique :** le lien panier du récap Discord réclame tous les jeux en une
+seule validation, depuis le navigateur où le captcha est passif.
+
+---
+
+État au 2026-05-31 (archive).
 
 ## Tentative API pure (`claimer_api.py`)
 

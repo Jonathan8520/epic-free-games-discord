@@ -9,7 +9,9 @@ notifie sur Discord avec un lien direct pour les réclamer en 2 clics.
 - 💎 Détecte les jeux à **-100% surprise** hors promo hebdo (rare)
 - 📱 Notifie les jeux gratuits **mobiles** (iOS/Android) via GamerPower
 - ⏰ Affiche les **dates de début/fin** avec timestamps Discord auto-localisés
-- ⚠️ **Auto-claim** — à l'arrêt depuis fin mai 2026 (voir [état actuel](#-auto-claim--état-de-larrêt-actuel))
+- 🛒 Envoie un **récapitulatif** quand plusieurs jeux sortent ensemble, avec un lien
+  qui ouvre le panier Epic déjà rempli : tout se réclame en une seule validation
+- ❌ **Auto-claim** : abandonné en septembre 2026 (voir [pourquoi](#-auto-claim--abandonné))
 
 ---
 
@@ -26,21 +28,21 @@ notifie sur Discord avec un lien direct pour les réclamer en 2 clics.
 ├── state.py                   → Gestion état persistant
 ├── logger.py                  → Logs
 │
-│  Auto-claim — code présent mais bloqué (voir AUTO_CLAIM_FINDINGS.md)
-├── claim_browser.py           → Playwright DOM clicks (marche en local, bloqué Cloudflare sur GH Actions)
-├── claimer_api.py             → Tentative API pure avec CapMonster (incomplet, captcha solver à finaliser)
-├── login_epic.py              → One-shot pour générer epic_storage_state.json
-├── claimer.py                 → Ancien claim API legacy (marche encore pour F2P / DLC)
-├── auth.py                    → OAuth Epic launcher (utilisé par claimer.py)
-├── gh_secrets.py              → Update des secrets GH via API (rotation tokens)
-├── test_claim.py              → Debug API claim (bootstrap + 3 endpoints candidats)
+│  Auto-claim — abandonné : code archivé, inactif tant que AUTO_CLAIM=false
+├── claim_browser.py           → Playwright : va jusqu'au paiement, bute sur le hCaptcha
+├── claimer_api.py             → Tentative API pure + solveur de captcha payant (jamais finie)
+├── claimer.py / auth.py       → Ancien claim API (F2P / DLC seulement)
+├── login_epic_cdp.py          → Récupère une session Epic depuis un Chrome lancé à la main
+├── login_epic.py              → Obsolète (Epic refuse une connexion pilotée par Playwright)
+├── gh_secrets.py              → Mise à jour des secrets GitHub (session rotative)
+├── test_*.py, _parse_har*.py  → Scripts de diagnostic de l'enquête
 │
 ├── requirements.txt
 ├── .env.example
 ├── .github/workflows/
-│   ├── epic.yml               → Workflow horaire principal
-│   └── test_claim.yml         → workflow_dispatch pour tester claim_browser
-└── AUTO_CLAIM_FINDINGS.md     → Investigation complète sur le claim Epic 2026 + options
+│   ├── epic.yml               → Workflow horaire principal (le seul qui tourne)
+│   └── test*.yml              → Diagnostics manuels de l'auto-claim (archivés)
+└── AUTO_CLAIM_FINDINGS.md     → Toute l'enquête sur le claim Epic (archive)
 ```
 
 Le `state.json` vit sur une **branche `datas`** séparée pour garder `main` propre.
@@ -89,6 +91,8 @@ Va dans Actions → "Run workflow" pour tester.
   - Reste du temps → vérification seulement si le dernier check date de +1h
 - À chaque nouveau jeu détecté → notif Discord avec image, prix, dates et lien direct
 - Tu cliques sur le lien → Epic ouvre la page → tu réclames en 2 clics
+- Si au moins 2 jeux sortent dans le même run → un récap avec le lien panier, pour
+  tout réclamer d'un coup
 
 ---
 
@@ -104,47 +108,42 @@ python preview.py
 
 ---
 
-## ⚠️ Auto-claim — état de l'arrêt actuel
+## ❌ Auto-claim — abandonné
 
-**État au 2026-05-31** : l'auto-claim ne fonctionne plus, **par choix temporaire**. Le bot envoie quand même les notifs Discord ; tu cliques manuellement sur le lien pour réclamer.
+**Décision finale (septembre 2026)** : le bot notifie, il ne réclame pas. La
+variable `AUTO_CLAIM` reste à `false`, le code d'auto-claim est gardé en archive,
+inactif, et le workflow n'installe même plus Chromium.
 
-### Pourquoi c'est arrêté
+### Pourquoi
 
-Plusieurs barrages Epic mis en 2026 :
+Epic protège la validation de commande par un **hCaptcha Enterprise**. Depuis le
+navigateur habituel du propriétaire du compte, il reste invisible. Depuis
+n'importe quelle autre machine, il exige un défi à images qu'aucun bot ne passe
+seul.
 
-1. **L'API pure (claimer.py)** : marche pour F2P / DLC permanents (Valorant, Triplex…), mais **pas pour les BASE_GAME hebdo** (les jeux gratuits du jeudi). Epic répond `not eligible` ou `CHECKOUT` sur ces offers, quelle que soit l'IP.
+Mesuré depuis une VM Oracle en septembre 2026 : le bot va jusqu'au bout du
+paiement, puis le défi tombe au clic « Ajouter à la bibliothèque », quels que
+soient l'IP (même résidentielle), le navigateur (vrai Chrome, mode furtif) ou la
+session Epic utilisée.
 
-2. **Le browser Playwright (claim_browser.py)** : marche parfaitement en local (testé sur Tomb Raider + Bermuda le 23/05) mais **bloqué par Cloudflare** sur GitHub Actions (les IPs Azure du runner sont flaguées comme datacenter et reçoivent un challenge "Vérifiez que vous êtes humain"). Même problème sur Oracle Cloud, AWS, etc.
+Les deux dernières voies ont été écartées : payer un solveur de captcha, ou faire
+tourner le bot sur son propre PC allumé en permanence. Le détail de l'enquête est
+dans [AUTO_CLAIM_FINDINGS.md](AUTO_CLAIM_FINDINGS.md).
 
-3. **L'API du flow checkout (claimer_api.py)** : tentative en cours. On a capturé un HAR du flow manuel, identifié l'endpoint `payment-website-pci.ol.epicgames.com/v2/purchase/confirm-order` qui finalise le claim sans Cloudflare. **Le bloqueur unique** est qu'il exige un `captchaToken` hCaptcha qu'on doit obtenir via un service tiers (2Captcha, CapMonster, CapSolver…). Voir [AUTO_CLAIM_FINDINGS.md](AUTO_CLAIM_FINDINGS.md) pour les détails.
+En pratique, le lien panier du récap fait le travail en une seule validation.
 
-### Options pour le relancer
+---
 
-Documentées dans [AUTO_CLAIM_FINDINGS.md](AUTO_CLAIM_FINDINGS.md), mais en résumé :
+## 🔧 Si un jour ça casse
 
-| Option | Coût | Setup |
+Le bot tourne sans entretien. Si les notifs s'arrêtent :
+
+| Symptôme | Cause probable | Quoi faire |
 |---|---|---|
-| **A. Self-hosted runner sur ton PC** | 0 € | ~15 min — IP résidentielle FR = pas de Cloudflare, code Playwright actuel marche direct |
-| **B. Service de résolution captcha (2Captcha hCaptcha)** | ~1 $/3 ans | ~30 min — finir `claimer_api.py` + push API key en GH Secret |
-| **C. Status quo** | 0 € | 0 min — clic manuel via la notif Discord (1 click/semaine) |
+| Plus aucune notif | Le workflow échoue | Onglet **Actions** → ouvrir le dernier run en rouge |
+| Mail de GitHub « scheduled workflow disabled » | 60 jours sans activité sur le dépôt public | **Actions** → *Epic Free Games Bot* → **Enable workflow** |
+| Plus de notif après avoir modifié le salon Discord | Webhook supprimé ou régénéré | Coller la nouvelle URL dans le secret `DISCORD_WEBHOOK` |
+| « ⚠️ API Epic Games inaccessible » à chaque run | Epic a changé son API | Adapter `epic.py` |
 
-À toi de choisir quand tu veux relancer. Le bot continue à notifier correctement entre-temps.
-
-### Tester en local (si tu veux jouer avec le claim)
-
-Le code Playwright fonctionne sur ta machine (IP résidentielle) :
-
-```bash
-# 1. One-shot login (génère epic_storage_state.json)
-python login_epic.py
-
-# 2. Test claim sur un slug
-python claim_browser.py tomb-raider-iiii-remastered-538640
-```
-
-Et l'ancien claim API (F2P / DLC seulement) :
-
-```bash
-$env:EPIC_REFRESH_TOKEN = "..."  # généré via test_claim.py --bootstrap
-python test_claim.py rocket-league--triplex-black-wheels
-```
+Pour lancer une vérification à la main : **Actions** → *Epic Free Games Bot* →
+**Run workflow**. Les jeux déjà notifiés ne sont pas renvoyés.
