@@ -359,7 +359,25 @@
       "url": "https://store.epicgames.com/fr/p/cardpocalypse-ios-46af9e",
       "notified_at": "2026-09-24T17:45:07.743959+00:00",
       "value": "5,39 €"
+    },
+    "upcoming_cb733f3432db46bca94965b422c33ede": {
+      "title": "Out of Sight",
+      "url": "https://store.epicgames.com/fr/p/out-of-sight-b96ca8",
+      "notified_at": "2026-10-01T14:58:44.590230+00:00",
+      "value": "13,99 €"
+    },
+    "upcoming_af6b823b8698465f9aedc3bddf2e8686": {
+      "title": "TerraScape",
+      "url": "https://store.epicgames.com/fr/p/terrascape-2b12b1",
+      "notified_at": "2026-10-01T14:58:44.812371+00:00",
+      "value": "15,29 €"
+    },
+    "mobile_next_bridge-constructor-studio": {
+      "title": "Bridge Constructor Studio",
+      "url": "https://store.epicgames.com/fr/p/bridge-constructor-studio-ios-c76845",
+      "notified_at": "2026-10-01T14:58:47.156258+00:00",
+      "value": "5,99 €"
     }
   },
-  "last_check": "2026-10-01T07:57:02.423737+00:00"
+  "last_check": "2026-10-01T14:58:47.156286+00:00"
 }
