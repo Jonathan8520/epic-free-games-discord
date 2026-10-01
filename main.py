@@ -14,6 +14,7 @@ rythme, et un run ne coûte que quelques appels HTTP.
 
 import sys
 import time
+from functools import partial
 from datetime import datetime, timedelta, timezone
 from config import cfg
 from state import State
@@ -29,6 +30,11 @@ from gh_secrets import update_secret
 # repartir : le cron suivant peut avoir beaucoup de retard (cf epic.yml).
 RELEASE_WAIT_MAX = timedelta(minutes=25)
 REFRESH_RETRIES  = 10   # l'API (servie par un CDN) peut basculer avec un peu de retard
+
+# Ordre d'envoi des notifs sur Discord quand un run en a plusieurs :
+# violet = à venir (PC et mobile), vert = gratuit PC, rouge = gratuit mobile,
+# jaune = surprise -100 %. Le récap (« tout réclamer ») part toujours en dernier.
+OUTBOX_ORDER = ("violet", "vert", "rouge", "jaune")
 
 
 def _parse_iso(value) -> datetime | None:
@@ -105,6 +111,10 @@ def main():
 
     # 4. Auto-claim via Playwright (DOM clicks). Voir AUTO_CLAIM_FINDINGS.md.
     #    Marche en local. Sur GH Actions Azure : bloqué par Cloudflare → fallback footer "captcha".
+    # Les notifs ne partent pas au fil de l'eau : elles sont rangées par couleur
+    # puis envoyées dans un ordre fixe à la fin du run (voir OUTBOX_ORDER).
+    outbox: dict[str, list] = {color: [] for color in OUTBOX_ORDER}
+
     claimer: Claimer | None = None
     recap_pc: list[dict] = []
     recap_mobile: list[dict] = []
@@ -152,7 +162,7 @@ def main():
         if not state.is_notified(game["id"]):
             log.info(f"Nouveau jeu détecté : {game['title']}")
             status = try_claim(game)
-            notify_new_game(game, claim_status=status)
+            outbox["vert"].append(partial(notify_new_game, game, claim_status=status))
             if status not in ("success", "owned"):
                 recap_pc.append(game)  # inutile de re-proposer un jeu déjà dans la lib
             state.mark_notified(game)
@@ -163,7 +173,7 @@ def main():
         upcoming_id = f"upcoming_{game['id']}"
         if not state.is_notified(upcoming_id):
             log.info(f"Jeu à venir détecté : {game['title']}")
-            notify_upcoming_game(game)
+            outbox["violet"].append(partial(notify_upcoming_game, game))
             state.mark_notified({**game, "id": upcoming_id})
 
     # 7. Surprise -100% → claim + notif
@@ -171,7 +181,7 @@ def main():
         if not state.is_notified(game["id"]):
             log.info(f"Surprise gratuite détectée : {game['title']}")
             status = try_claim(game)
-            notify_surprise_game(game, claim_status=status)
+            outbox["jaune"].append(partial(notify_surprise_game, game, claim_status=status))
             if status not in ("success", "owned"):
                 recap_pc.append(game)  # inutile de re-proposer un jeu déjà dans la lib
             state.mark_notified(game)
@@ -193,7 +203,7 @@ def main():
 
         for game in new_mobile:
             log.info(f"[MOBILE] Nouveau jeu mobile : {game['title']}")
-            notify_mobile_game(game)
+            outbox["rouge"].append(partial(notify_mobile_game, game))
             recap_mobile.append(game)
             state.mark_notified({
                 "id"            : state_keys(game)[0],
@@ -210,7 +220,7 @@ def main():
                 continue
             key = keys[0]
             log.info(f"[MOBILE] Giveaway mobile à venir : {game['title']}")
-            notify_mobile_game(game, upcoming=True)
+            outbox["violet"].append(partial(notify_mobile_game, game, upcoming=True))
             state.mark_notified({
                 "id"            : key,
                 "title"         : game["title"],
@@ -221,8 +231,11 @@ def main():
     except Exception as e:
         log.warning(f"[MOBILE] Erreur récupération jeux mobiles : {e}")
 
-    # 9. Récapitulatif final (uniquement si au moins 2 jeux ce run)
-    notify_recap(recap_pc, recap_mobile)
+    # 9. Envoi dans l'ordre : violet, vert, rouge, jaune, puis le récap
+    for color in OUTBOX_ORDER:
+        for send in outbox[color]:
+            send()
+    notify_recap(recap_pc, recap_mobile)  # uniquement si au moins 2 jeux ce run
 
     # 10. Sauvegarde
     state.save()

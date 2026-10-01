@@ -93,6 +93,9 @@ Va dans Actions → "Run workflow" pour tester.
   la sortie **attend** qu'elle ait lieu au lieu de repartir, puis recharge l'API
   jusqu'à ce qu'elle ait basculé.
 - Un seul run à la fois (`concurrency`) : pas de notif en double.
+- Quand un run a plusieurs notifs, elles partent toujours dans le même ordre :
+  violet (à venir), vert (gratuit PC), rouge (gratuit mobile), jaune (surprise),
+  puis le récap. Ordre réglable via `OUTBOX_ORDER` dans `main.py`.
 - `state.json` n'est poussé sur `datas` que s'il a changé.
 - À chaque nouveau jeu détecté → notif Discord avec image, prix, dates et lien direct
 - Tu cliques sur le lien → Epic ouvre la page → tu réclames en 2 clics
