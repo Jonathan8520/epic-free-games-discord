@@ -342,18 +342,6 @@
       "notified_at": "2026-09-24T17:45:04.383104+00:00",
       "value": "14,79 €"
     },
-    "upcoming_7ae00c3e89174012b175cc73b4737723": {
-      "title": "System Shock 2: 25th Anniversary Remaster",
-      "url": "https://store.epicgames.com/fr/p/system-shock-2-25th-anniversary-remaster-cb94d9",
-      "notified_at": "2026-09-24T17:45:04.744526+00:00",
-      "value": "26,99 €"
-    },
-    "upcoming_af4c34934afe4db0870b8a1d82dceb94": {
-      "title": "BURIED STARS",
-      "url": "https://store.epicgames.com/fr/p/buried-stars-d7c88c",
-      "notified_at": "2026-09-24T17:45:05.019136+00:00",
-      "value": "33,99 €"
-    },
     "mobile_cardpocalypse": {
       "title": "Cardpocalypse",
       "url": "https://store.epicgames.com/fr/p/cardpocalypse-ios-46af9e",
@@ -377,7 +365,25 @@
       "url": "https://store.epicgames.com/fr/p/bridge-constructor-studio-ios-c76845",
       "notified_at": "2026-10-01T14:58:47.156258+00:00",
       "value": "5,99 €"
+    },
+    "7ae00c3e89174012b175cc73b4737723": {
+      "title": "System Shock 2: 25th Anniversary Remaster",
+      "url": "https://store.epicgames.com/fr/p/system-shock-2-25th-anniversary-remaster-cb94d9",
+      "notified_at": "2026-10-01T15:01:40.269051+00:00",
+      "value": "26,99 €"
+    },
+    "af4c34934afe4db0870b8a1d82dceb94": {
+      "title": "BURIED STARS",
+      "url": "https://store.epicgames.com/fr/p/buried-stars-d7c88c",
+      "notified_at": "2026-10-01T15:01:40.526153+00:00",
+      "value": "33,99 €"
+    },
+    "mobile_bridge-constructor-studio": {
+      "title": "Bridge Constructor Studio",
+      "url": "https://store.epicgames.com/fr/p/bridge-constructor-studio-ios-c76845",
+      "notified_at": "2026-10-01T15:01:45.220613+00:00",
+      "value": "5,99 €"
     }
   },
-  "last_check": "2026-10-01T14:58:47.156286+00:00"
+  "last_check": "2026-10-01T15:01:45.572938+00:00"
 }
