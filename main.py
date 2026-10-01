@@ -2,23 +2,76 @@
 main.py — Orchestrateur principal déclenché par GitHub Actions.
 
 Flux :
-1. Vérifie si ce run est nécessaire (scheduler)
-2. Récupère les jeux gratuits Epic (epic.py)
-3. Notifie sur Discord les nouveaux jeux (current + upcoming)
-4. Notifie les jeux mobiles gratuits (GamerPower)
-5. Sauvegarde l'état
+1. Récupère les jeux gratuits Epic (epic.py), en attendant la sortie si
+   elle tombe dans les prochaines minutes (jeudi 11h New York)
+2. Notifie sur Discord les nouveaux jeux (current + upcoming)
+3. Notifie les jeux mobiles gratuits (GamerPower)
+4. Sauvegarde l'état (seulement s'il a changé)
+
+Pas de garde-fou horaire côté Python : c'est le cron d'epic.yml qui fixe le
+rythme, et un run ne coûte que quelques appels HTTP.
 """
 
 import sys
+import time
+from datetime import datetime, timedelta, timezone
 from config import cfg
 from state import State
 from epic import get_free_games, get_surprise_free_games
 from mobile import get_epic_mobile_games, get_new_mobile_games, scan_scheduled_claims, state_keys
 from notifier import notify_new_game, notify_upcoming_game, notify_surprise_game, notify_mobile_game, notify_recap, alert_api_down
-from scheduler import should_run
 from logger import log
 from claim_browser import Claimer, ClaimOutcome
 from gh_secrets import update_secret
+
+
+# Un run qui arrive jusqu'à 25 min avant une sortie l'attend plutôt que de
+# repartir : le cron suivant peut avoir beaucoup de retard (cf epic.yml).
+RELEASE_WAIT_MAX = timedelta(minutes=25)
+REFRESH_RETRIES  = 10   # l'API (servie par un CDN) peut basculer avec un peu de retard
+
+
+def _parse_iso(value) -> datetime | None:
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except (AttributeError, TypeError, ValueError):
+        return None
+
+
+def _wait_for_release(games: list[dict]) -> list[dict]:
+    """Si un jeu « à venir » devient gratuit dans les prochaines minutes,
+    dort jusqu'à la sortie puis recharge l'API jusqu'à ce qu'elle ait basculé.
+    Retourne la liste de jeux à traiter (inchangée s'il n'y a rien à attendre)."""
+    now = datetime.now(timezone.utc)
+    upcoming = [(g, _parse_iso(g.get("start_date"))) for g in games if g["status"] == "next"]
+    soon = [(g, s) for g, s in upcoming if s and timedelta(0) < s - now <= RELEASE_WAIT_MAX]
+    if not soon:
+        return games
+
+    release  = min(s for _, s in soon)
+    expected = {g["id"] for g, s in soon if s == release}
+    delay    = (release - now).total_seconds() + 20
+    log.info(f"[RELEASE] Sortie à {release:%H:%M} UTC dans {delay / 60:.1f} min "
+             f"({len(expected)} jeu(x)) : on attend.")
+    time.sleep(delay)
+
+    for attempt in range(1, REFRESH_RETRIES + 1):
+        try:
+            games = get_free_games()
+        except Exception:
+            if attempt == REFRESH_RETRIES:
+                raise
+            time.sleep(60)
+            continue
+        current_ids = {g["id"] for g in games if g["status"] == "current"}
+        if expected <= current_ids:
+            log.info("[RELEASE] API à jour, on continue.")
+            return games
+        if attempt < REFRESH_RETRIES:
+            log.info(f"[RELEASE] API pas encore à jour (essai {attempt}), nouvel essai dans 60 s.")
+            time.sleep(60)
+    log.warning("[RELEASE] API toujours pas à jour, le prochain run prendra le relais.")
+    return games
 
 
 def main():
@@ -27,21 +80,16 @@ def main():
 
     state = State(cfg.STATE_FILE)
 
-    # 1. Faut-il tourner ce run ?
-    if cfg.FORCE_RUN:
-        log.info("[SCHEDULER] FORCE_RUN actif - garde-fou ignore.")
-    elif not should_run(state._data.get("last_check")):
-        log.info("Rien à faire ce run.")
+    # 1. Récupère les jeux gratuits Epic (attend la sortie si elle est imminente)
+    try:
+        games = _wait_for_release(get_free_games())
+    except Exception:
+        log.error("API Epic inaccessible — arrêt sans toucher aux jeux vus.")
+        if state.set_api_down(True):
+            alert_api_down()
         state.save()
         return
-
-    # 2. Récupère les jeux gratuits Epic
-    try:
-        games = get_free_games()
-    except Exception:
-        log.error("API Epic inaccessible — arrêt sans modifier l'état.")
-        alert_api_down()
-        return
+    state.set_api_down(False)
 
     current_games  = [g for g in games if g["status"] == "current"]
     upcoming_games = [g for g in games if g["status"] == "next"]

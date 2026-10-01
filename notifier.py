@@ -145,7 +145,8 @@ def alert_api_down():
         "content": (
             "⚠️ **API Epic Games inaccessible.**\n"
             "Le bot n'a pas pu vérifier les jeux gratuits ce run.\n"
-            "Aucun jeu n'a été marqué comme vu — la vérification reprendra normalement au prochain run."
+            "Aucun jeu n'a été marqué comme vu — la vérification reprendra normalement au prochain run.\n"
+            "Cette alerte n'est envoyée qu'une fois par panne."
         )
     })
 

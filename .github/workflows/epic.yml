@@ -2,17 +2,31 @@ name: Epic Free Games Bot
 
 on:
   schedule:
-    - cron: "0 * * * *"  # Toutes les heures (le scheduler Python filtre)
+    # Surprises (aucun horaire fixe) : toutes les 20 min, jamais a l'heure pile.
+    # L'heure pile est le creneau le plus charge de GitHub : avec `0 * * * *`,
+    # les runs etaient retardes ou supprimes (3 a 7 h entre deux runs constates).
+    - cron: "8,28,48 * * * *"
+    # Sortie hebdo : Epic bascule le jeudi a 11h heure de New York (17h a Paris).
+    # Le fuseau suit les changements d'heure tout seul. Plusieurs declenchements :
+    # si GitHub en saute un, un autre passe, et un run arrive avant 11h attend
+    # la sortie au lieu de repartir (voir _wait_for_release dans main.py).
+    - cron: "40,50,55 10 * * 4"
+      timezone: "America/New_York"
+    - cron: "3,10,20 11 * * 4"
+      timezone: "America/New_York"
   workflow_dispatch:
-    inputs:
-      force:
-        description: "Ignorer le scheduler et forcer la verification"
-        type: boolean
-        default: true
+
+# Un seul run a la fois : deux runs qui se chevauchent liraient le meme
+# state.json et enverraient deux fois les memes notifs. Un run en attente de
+# la sortie du jeudi garde la main, les suivants patientent derriere.
+concurrency:
+  group: epic-bot
+  cancel-in-progress: false
 
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: write
 
@@ -64,7 +78,6 @@ jobs:
           AUTO_CLAIM            : ${{ vars.AUTO_CLAIM }}
           EPIC_STORAGE_STATE_B64: ${{ secrets.EPIC_STORAGE_STATE_B64 }}
           GH_PAT                : ${{ secrets.GH_PAT }}
-          FORCE_RUN             : ${{ inputs.force }}
         run: python main.py
 
       - name: Upload debug screenshots (on failure)

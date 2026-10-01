@@ -24,7 +24,6 @@ notifie sur Discord avec un lien direct pour les réclamer en 2 clics.
 ├── epic.py                    → API Epic Games Store
 ├── mobile.py                  → Jeux gratuits mobiles (GamerPower)
 ├── notifier.py                → Notifications Discord (avec footers claim)
-├── scheduler.py               → Garde intelligente (évite les runs inutiles)
 ├── state.py                   → Gestion état persistant
 ├── logger.py                  → Logs
 │
@@ -71,7 +70,7 @@ Settings → Secrets and variables → Actions → New repository secret
 ```bash
 git checkout --orphan datas
 git rm -rf .
-echo '{"games":{},"last_check":null}' > state.json
+echo '{"games":{}}' > state.json
 git add state.json
 git commit -m "init datas branch"
 git push -u origin datas
@@ -85,10 +84,16 @@ Va dans Actions → "Run workflow" pour tester.
 
 ## 💡 Fonctionnement
 
-- Le workflow tourne **toutes les heures** (cron horaire)
-- Le scheduler Python filtre intelligemment :
-  - Jeudi 15h–20h UTC → vérification à chaque run (Epic publie ~16h-17h UTC)
-  - Reste du temps → vérification seulement si le dernier check date de +1h
+- Le workflow tourne **toutes les 20 min** (minutes 8, 28 et 48, jamais à l'heure
+  pile : c'est le créneau où GitHub retarde ou supprime le plus de runs planifiés).
+  Ça couvre les jeux surprises, qui n'ont pas d'horaire fixe.
+- **Jeudi** : Epic publie à 11h heure de New York (17h à Paris). Des crons
+  supplémentaires tombent entre 10h40 et 11h20 (fuseau `America/New_York`, donc
+  changements d'heure gérés tout seuls). Un run qui arrive jusqu'à 25 min avant
+  la sortie **attend** qu'elle ait lieu au lieu de repartir, puis recharge l'API
+  jusqu'à ce qu'elle ait basculé.
+- Un seul run à la fois (`concurrency`) : pas de notif en double.
+- `state.json` n'est poussé sur `datas` que s'il a changé.
 - À chaque nouveau jeu détecté → notif Discord avec image, prix, dates et lien direct
 - Tu cliques sur le lien → Epic ouvre la page → tu réclames en 2 clics
 - Si au moins 2 jeux sortent dans le même run → un récap avec le lien panier, pour
@@ -143,7 +148,7 @@ Le bot tourne sans entretien. Si les notifs s'arrêtent :
 | Plus aucune notif | Le workflow échoue | Onglet **Actions** → ouvrir le dernier run en rouge |
 | Mail de GitHub « scheduled workflow disabled » | 60 jours sans activité sur le dépôt public | **Actions** → *Epic Free Games Bot* → **Enable workflow** |
 | Plus de notif après avoir modifié le salon Discord | Webhook supprimé ou régénéré | Coller la nouvelle URL dans le secret `DISCORD_WEBHOOK` |
-| « ⚠️ API Epic Games inaccessible » à chaque run | Epic a changé son API | Adapter `epic.py` |
+| « ⚠️ API Epic Games inaccessible » (une alerte par panne) qui ne se résout pas | Epic a changé son API | Adapter `epic.py` |
 
 Pour lancer une vérification à la main : **Actions** → *Epic Free Games Bot* →
-**Run workflow**. Les jeux déjà notifiés ne sont pas renvoyés.
+**Run workflow** (ou un `POST` sur l'API `workflows/epic.yml/dispatches`). Les jeux déjà notifiés ne sont pas renvoyés.
