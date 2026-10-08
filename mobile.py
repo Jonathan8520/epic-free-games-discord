@@ -189,12 +189,15 @@ def _merge(results: list[dict], game: dict) -> None:
     results.append(game)
 
 
-def get_epic_mobile_games() -> list[dict]:
+def get_epic_mobile_games(fresh: bool = False) -> list[dict]:
     """
     Retourne les giveaways mobiles Epic actuellement réclamables.
     Chaque item : { id, sandbox_id, cart_offers, title, slug, url, image, icon,
                     platforms, worth, starts, expires }
+    fresh=True ignore le payload mémorisé (pour guetter une bascule).
     """
+    if fresh:
+        _CACHE.clear()
     results: list[dict] = []
     now = datetime.now(timezone.utc)
 

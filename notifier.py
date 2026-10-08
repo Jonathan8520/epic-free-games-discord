@@ -7,10 +7,13 @@ Deux webhooks distincts :
   Si ALERT_WEBHOOK n'est pas défini, les alertes vont dans le salon principal.
 """
 
+import time
 from datetime import datetime
 import requests
 from config import cfg
 from logger import log
+
+POST_RETRIES = 3  # uniquement sur 429 (rate limit Discord)
 
 
 def _ts(iso_date: str | None) -> int | None:
@@ -26,20 +29,35 @@ def _ts(iso_date: str | None) -> int | None:
 def _post(webhook_url: str, payload: dict, with_components: bool = False) -> bool:
     """Envoie le payload. with_components=True est requis pour qu'un webhook
     non applicatif (webhook de salon classique) accepte le champ `components` ;
-    sans ce paramètre Discord l'ignore silencieusement."""
-    url = webhook_url
+    sans ce paramètre Discord l'ignore silencieusement.
+
+    wait=true : Discord ne répond qu'une fois le message enregistré. Sans lui,
+    il répond avant et l'ordre d'affichage n'est pas garanti (le 08/10, un
+    embed envoyé en 3e est apparu après le récap). En contrepartie un 429
+    devient visible : on respecte le retry_after au lieu de perdre la notif."""
+    params = {"wait": "true"}
     if with_components:
-        url += ("&" if "?" in url else "?") + "with_components=true"
-    try:
-        resp = requests.post(url, json=payload, timeout=10)
-        resp.raise_for_status()
-        return True
-    except requests.RequestException as e:
-        detail = ""
-        if e.response is not None:
-            detail = f" — {e.response.text[:200]}"
-        log.error(f"[NOTIFIER] Échec envoi webhook : {e}{detail}")
-        return False
+        params["with_components"] = "true"
+    for attempt in range(1, POST_RETRIES + 1):
+        try:
+            resp = requests.post(webhook_url, params=params, json=payload, timeout=10)
+            if resp.status_code == 429 and attempt < POST_RETRIES:
+                try:
+                    delay = float(resp.json().get("retry_after", 1))
+                except ValueError:
+                    delay = 1.0
+                log.info(f"[NOTIFIER] Rate limit Discord, nouvel essai dans {delay:.1f} s.")
+                time.sleep(delay + 0.1)
+                continue
+            resp.raise_for_status()
+            return True
+        except requests.RequestException as e:
+            detail = ""
+            if e.response is not None:
+                detail = f" — {e.response.text[:200]}"
+            log.error(f"[NOTIFIER] Échec envoi webhook : {e}{detail}")
+            return False
+    return False
 
 
 CLAIM_FOOTERS = {

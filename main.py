@@ -30,6 +30,9 @@ from gh_secrets import update_secret
 # repartir : le cron suivant peut avoir beaucoup de retard (cf epic.yml).
 RELEASE_WAIT_MAX = timedelta(minutes=25)
 REFRESH_RETRIES  = 10   # l'API (servie par un CDN) peut basculer avec un peu de retard
+# Le giveaway mobile n'ouvre pas forcément en même temps que le PC (le 08/10 :
+# 15:05 UTC contre 15:00), et il n'est pas toujours annoncé à l'avance.
+MOBILE_WAIT_MAX  = timedelta(minutes=15)
 
 # Ordre d'envoi des notifs sur Discord quand un run en a plusieurs :
 # violet = à venir (PC et mobile), vert = gratuit PC, rouge = gratuit mobile,
@@ -78,6 +81,23 @@ def _wait_for_release(games: list[dict]) -> list[dict]:
             time.sleep(60)
     log.warning("[RELEASE] API toujours pas à jour, le prochain run prendra le relais.")
     return games
+
+
+def _wait_for_mobile(seen_ids: set) -> list[dict]:
+    """Guette le nouveau giveaway mobile pendant MOBILE_WAIT_MAX au plus.
+    Appelé par le run qui annonce la sortie PC : le cron suivant peut avoir
+    plusieurs heures de retard, autant que ce run envoie tout, récap compris.
+    Retourne les nouveaux jeux mobiles (vide si rien n'est apparu)."""
+    log.info(f"[MOBILE] Pas encore de nouveau giveaway mobile : on guette "
+             f"{MOBILE_WAIT_MAX.total_seconds() / 60:.0f} min max.")
+    deadline = time.monotonic() + MOBILE_WAIT_MAX.total_seconds()
+    while time.monotonic() < deadline:
+        time.sleep(60)
+        new_mobile = get_new_mobile_games(get_epic_mobile_games(fresh=True), seen_ids)
+        if new_mobile:
+            return new_mobile
+    log.warning("[MOBILE] Toujours aucun nouveau giveaway mobile, le prochain run prendra le relais.")
+    return []
 
 
 def main():
@@ -200,6 +220,8 @@ def main():
         mobile_games = get_epic_mobile_games()
         seen_ids     = set(state._data["games"].keys())
         new_mobile   = get_new_mobile_games(mobile_games, seen_ids)
+        if new_games_to_process and not new_mobile:
+            new_mobile = _wait_for_mobile(seen_ids)
 
         for game in new_mobile:
             log.info(f"[MOBILE] Nouveau jeu mobile : {game['title']}")
