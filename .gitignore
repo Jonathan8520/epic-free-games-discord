@@ -3,10 +3,4 @@ __pycache__/
 .venv/
 state.json
 .env
-epic_storage_state.json
-.pw_profile/
-debug_*.png
-_har_capture.har
-_har_capture*.har
-*.har
 temp/

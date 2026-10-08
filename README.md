@@ -7,7 +7,7 @@ notifie sur Discord avec un lien direct pour les réclamer en 2 clics.
 - 🎮 Notifie les jeux gratuits **de la semaine** (1-2 jeux/semaine)
 - 🔜 Notifie les jeux gratuits **à venir la semaine prochaine**
 - 💎 Détecte les jeux à **-100% surprise** hors promo hebdo (rare)
-- 📱 Notifie les jeux gratuits **mobiles** (iOS/Android) via GamerPower
+- 📱 Notifie les jeux gratuits **mobiles** (iOS/Android) via l'API du store mobile Epic
 - ⏰ Affiche les **dates de début/fin** avec timestamps Discord auto-localisés
 - 🛒 Envoie un **récapitulatif** quand plusieurs jeux sortent ensemble, avec un lien
   qui ouvre le panier Epic déjà rempli : tout se réclame en une seule validation
@@ -22,33 +22,24 @@ notifie sur Discord avec un lien direct pour les réclamer en 2 clics.
 ├── preview.py                 → Test local des notifs (sans toucher au state)
 ├── config.py                  → Configuration centralisée
 ├── epic.py                    → API Epic Games Store
-├── mobile.py                  → Jeux gratuits mobiles (GamerPower)
-├── notifier.py                → Notifications Discord (avec footers claim)
+├── mobile.py                  → Jeux gratuits mobiles (API du store mobile Epic)
+├── notifier.py                → Notifications Discord
 ├── state.py                   → Gestion état persistant
 ├── logger.py                  → Logs
-│
-│  Auto-claim — abandonné : code archivé, inactif tant que AUTO_CLAIM=false
-├── claim_browser.py           → Playwright : va jusqu'au paiement, bute sur le hCaptcha
-├── claimer_api.py             → Tentative API pure + solveur de captcha payant (jamais finie)
-├── claimer.py / auth.py       → Ancien claim API (F2P / DLC seulement)
-├── login_epic_cdp.py          → Récupère une session Epic depuis un Chrome lancé à la main
-├── login_epic.py              → Obsolète (Epic refuse une connexion pilotée par Playwright)
-├── gh_secrets.py              → Mise à jour des secrets GitHub (session rotative)
-├── test_*.py, _parse_har*.py  → Scripts de diagnostic de l'enquête
+├── test_recap.py              → Test du récap et de son bouton panier
 │
 ├── requirements.txt
 ├── .env.example
-├── .github/workflows/
-│   ├── epic.yml               → Workflow horaire principal (le seul qui tourne)
-│   └── test*.yml              → Diagnostics manuels de l'auto-claim (archivés)
-└── AUTO_CLAIM_FINDINGS.md     → Toute l'enquête sur le claim Epic (archive)
+└── .github/workflows/
+    ├── epic.yml               → Workflow principal (le seul qui tourne tout seul)
+    └── test-recap.yml         → Lance test_recap.py à la main
 ```
 
 Le `state.json` vit sur une **branche `datas`** séparée pour garder `main` propre.
 
 ---
 
-## 🚀 Setup minimal (juste les notifs, sans auto-claim)
+## 🚀 Setup
 
 ### 1. Créer un webhook Discord
 Paramètres du salon → Intégrations → Webhooks → Nouveau webhook → copier l'URL.
@@ -92,6 +83,10 @@ Va dans Actions → "Run workflow" pour tester.
   changements d'heure gérés tout seuls). Un run qui arrive jusqu'à 25 min avant
   la sortie **attend** qu'elle ait lieu au lieu de repartir, puis recharge l'API
   jusqu'à ce qu'elle ait basculé.
+- En pratique, GitHub saute une bonne partie des crons (parfois 3 à 6 h sans
+  run). Le run de sortie du jeudi fait donc tout lui-même : si le giveaway
+  mobile n'est pas encore ouvert (il peut avoir quelques minutes de retard sur
+  le PC), il le guette jusqu'à 15 min avant d'envoyer les notifs.
 - Un seul run à la fois (`concurrency`) : pas de notif en double.
 - Quand un run a plusieurs notifs, elles partent toujours dans le même ordre :
   violet (à venir), vert (gratuit PC), rouge (gratuit mobile), jaune (surprise),
@@ -118,9 +113,10 @@ python preview.py
 
 ## ❌ Auto-claim — abandonné
 
-**Décision finale (septembre 2026)** : le bot notifie, il ne réclame pas. La
-variable `AUTO_CLAIM` reste à `false`, le code d'auto-claim est gardé en archive,
-inactif, et le workflow n'installe même plus Chromium.
+**Décision finale (septembre 2026)** : le bot notifie, il ne réclame pas. Le
+code d'auto-claim a été retiré de `main` le 08/10/2026. Il reste entier au tag
+[`archive/auto-claim`](../../tree/archive/auto-claim) (`git checkout archive/auto-claim`),
+avec ses scripts de diagnostic et ses workflows de test.
 
 ### Pourquoi
 
@@ -136,7 +132,7 @@ session Epic utilisée.
 
 Les deux dernières voies ont été écartées : payer un solveur de captcha, ou faire
 tourner le bot sur son propre PC allumé en permanence. Le détail de l'enquête est
-dans [AUTO_CLAIM_FINDINGS.md](AUTO_CLAIM_FINDINGS.md).
+dans [AUTO_CLAIM_FINDINGS.md](../../blob/archive/auto-claim/AUTO_CLAIM_FINDINGS.md).
 
 En pratique, le lien panier du récap fait le travail en une seule validation.
 

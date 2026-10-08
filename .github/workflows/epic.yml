@@ -50,43 +50,12 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      # Chromium ne sert qu'à l'auto-claim, abandonné (AUTO_CLAIM=false). Ne pas
-      # l'installer évite d'appeler apt-get à chaque run : c'est l'étape qui
-      # casserait au passage d'ubuntu-latest à une nouvelle version d'Ubuntu.
-      - name: Cache Playwright browsers
-        if: vars.AUTO_CLAIM == 'true'
-        id: pw-cache
-        uses: actions/cache@v6
-        with:
-          path: ~/.cache/ms-playwright
-          key: pw-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
-
-      - name: Install Chromium for Playwright
-        if: vars.AUTO_CLAIM == 'true' && steps.pw-cache.outputs.cache-hit != 'true'
-        run: python -m playwright install --with-deps chromium
-
-      - name: Install Chromium system deps (cache hit case)
-        if: vars.AUTO_CLAIM == 'true' && steps.pw-cache.outputs.cache-hit == 'true'
-        run: python -m playwright install-deps chromium
-
       - name: Run bot
         env:
-          DISCORD_WEBHOOK       : ${{ secrets.DISCORD_WEBHOOK }}
-          ALERT_WEBHOOK         : ${{ secrets.ALERT_WEBHOOK }}
-          ROLE_ID               : ${{ secrets.ROLE_ID }}
-          GITHUB_REPOSITORY     : ${{ github.repository }}
-          AUTO_CLAIM            : ${{ vars.AUTO_CLAIM }}
-          EPIC_STORAGE_STATE_B64: ${{ secrets.EPIC_STORAGE_STATE_B64 }}
-          GH_PAT                : ${{ secrets.GH_PAT }}
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          ALERT_WEBHOOK  : ${{ secrets.ALERT_WEBHOOK }}
+          ROLE_ID        : ${{ secrets.ROLE_ID }}
         run: python main.py
-
-      - name: Upload debug screenshots (on failure)
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: debug-screenshots
-          path: debug_*.png
-          if-no-files-found: ignore
 
       - name: Push state.json to datas branch
         run: |

@@ -60,16 +60,7 @@ def _post(webhook_url: str, payload: dict, with_components: bool = False) -> boo
     return False
 
 
-CLAIM_FOOTERS = {
-    "success" : "✅ Réclamé automatiquement sur ton compte",
-    "owned"   : "ℹ️ Déjà dans ta bibliothèque",
-    "captcha" : "⚠️ Captcha Epic — clique sur le lien pour récupérer",
-    "failed"  : "⚠️ Auto-claim échoué — clique pour récupérer",
-    "not_free": "🛑 Plus gratuit au moment du claim — rien n'a été acheté",
-}
-
-
-def _game_embed(game: dict, color: int = 0x1ED760, claim_status: str | None = None,
+def _game_embed(game: dict, color: int = 0x1ED760,
                 default_footer: str = "Epic Games Store • Gratuit cette semaine") -> dict:
     title = game.get("title", "Jeu inconnu")
     url   = game.get("url", "https://store.epicgames.com/fr/free-games")
@@ -113,13 +104,12 @@ def _game_embed(game: dict, color: int = 0x1ED760, claim_status: str | None = No
         "inline": True,
     })
 
-    footer_text = CLAIM_FOOTERS.get(claim_status, default_footer)
     embed = {
         "title" : f"🎮 {title}",
         "url"   : url,
         "color" : color,
         "fields": fields,
-        "footer": {"text": footer_text},
+        "footer": {"text": default_footer},
     }
     if image:
         embed["thumbnail"] = {"url": image}
@@ -128,10 +118,10 @@ def _game_embed(game: dict, color: int = 0x1ED760, claim_status: str | None = No
 
 # ── Notifications principales ────────────────────────────────
 
-def notify_new_game(game: dict, claim_status: str | None = None):
+def notify_new_game(game: dict):
     """Notifie d'un nouveau jeu gratuit dans le salon principal."""
     ping  = f"<@&{cfg.ROLE_ID}> " if cfg.ROLE_ID else ""
-    embed = _game_embed(game, claim_status=claim_status)
+    embed = _game_embed(game)
     _post(cfg.DISCORD_WEBHOOK, {"content": ping or None, "embeds": [embed]})
     log.info(f"[NOTIFIER] Notif envoyée pour {game['title']}")
 
@@ -145,9 +135,9 @@ def notify_upcoming_game(game: dict):
     log.info(f"[NOTIFIER] Notif upcoming envoyée pour {game['title']}")
 
 
-def notify_surprise_game(game: dict, claim_status: str | None = None):
+def notify_surprise_game(game: dict):
     """Notifie d'un jeu à -100% surprise (hors promo hebdo Epic)."""
-    embed = _game_embed(game, color=0xFFD700, claim_status=claim_status,
+    embed = _game_embed(game, color=0xFFD700,
                         default_footer="Epic Games Store • -100% hors promo hebdomadaire")
     embed["title"] = f"💎 {game['title']}"
     ping = f"<@&{cfg.ROLE_ID}> " if cfg.ROLE_ID else ""
@@ -275,8 +265,7 @@ def cart_offers(game: dict) -> list[tuple[str, str]]:
     """Couples (namespace, offerId) réclamables au panier pour ce jeu.
 
     Un seul couple par jeu, PC comme mobile. Côté mobile le namespace s'appelle
-    `sandbox_id` dans le payload de l'API (c'est la même valeur — cf.
-    claimer_api._resolve, qui lit le namespace dans le champ sandboxId).
+    `sandbox_id` dans le payload de l'API : c'est la même valeur.
     """
     chosen = pick_cart_offer(game)
     if chosen:

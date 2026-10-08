@@ -144,9 +144,8 @@ def _parse_offer(offer: dict, platform: str, claim: dict | None = None) -> dict 
         "key": _title_key(title),
         "offer_ids": [offer_id],
         "sandbox_id": sandbox_id,
-        # Offres réclamables via le panier web. Le sandboxId EST le namespace
-        # (cf. claimer_api._resolve : pageSlug -> sandboxId -> namespace), donc
-        # un giveaway mobile s'ajoute au panier comme un jeu PC. On les garde
+        # Offres réclamables via le panier web. Le sandboxId EST le namespace,
+        # donc un giveaway mobile s'ajoute au panier comme un jeu PC. On les garde
         # par plateforme : iOS et Android sont deux SKU distincts, chacun avec
         # son couple (sandboxId, offerId), et _merge n'en conserverait qu'un.
         "cart_offers": (
