@@ -408,18 +408,6 @@
       "notified_at": "2026-10-15T15:40:19.461011+00:00",
       "value": "17,99 €"
     },
-    "upcoming_6aab3ddef4f84fbc9dd81c60f9d8549c": {
-      "title": "Sker Ritual",
-      "url": "https://store.epicgames.com/fr/p/sker-ritual-aac702",
-      "notified_at": "2026-10-15T15:40:19.461111+00:00",
-      "value": "22,39 €"
-    },
-    "upcoming_06190191cede42afb633fe89ef08c27e": {
-      "title": "Home - A Unique Horror Adventure",
-      "url": "https://store.epicgames.com/fr/p/home-19212a",
-      "notified_at": "2026-10-15T15:40:19.461181+00:00",
-      "value": "4,49 €"
-    },
     "mobile_agent-a---casse-tête-d-espions": {
       "title": "Agent A - Casse-tête d’espions",
       "url": "https://store.epicgames.com/fr/p/agent-a-a-puzzle-in-disguise-ios-d7a459",
@@ -437,7 +425,31 @@
       "url": "https://store.epicgames.com/fr/p/dimond-hunt-03a766",
       "notified_at": "2026-10-21T20:07:24.944353+00:00",
       "value": "6,29 €"
+    },
+    "6aab3ddef4f84fbc9dd81c60f9d8549c": {
+      "title": "Sker Ritual",
+      "url": "https://store.epicgames.com/fr/p/sker-ritual-aac702",
+      "notified_at": "2026-10-22T16:22:30.820281+00:00",
+      "value": "22,39 €"
+    },
+    "06190191cede42afb633fe89ef08c27e": {
+      "title": "Home - A Unique Horror Adventure",
+      "url": "https://store.epicgames.com/fr/p/home-19212a",
+      "notified_at": "2026-10-22T16:22:30.820383+00:00",
+      "value": "4,49 €"
+    },
+    "upcoming_4e469c7d8bbf49bcabc2c07127d3d946": {
+      "title": "Sorry We're Closed",
+      "url": "https://store.epicgames.com/fr/p/sorry-were-closed-724c86",
+      "notified_at": "2026-10-22T16:22:30.820485+00:00",
+      "value": "22,39 €"
+    },
+    "mobile_home---a-unique-horror-adventure": {
+      "title": "Home - A Unique Horror Adventure",
+      "url": "https://store.epicgames.com/fr/p/home-ios-69cfcf",
+      "notified_at": "2026-10-22T16:22:32.657252+00:00",
+      "value": "2,69 €"
     }
   },
-  "updated_at": "2026-10-21T20:07:26.656690+00:00"
+  "updated_at": "2026-10-22T16:22:33.851221+00:00"
 }
