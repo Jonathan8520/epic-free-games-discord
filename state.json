@@ -438,12 +438,6 @@
       "notified_at": "2026-10-22T16:22:30.820383+00:00",
       "value": "4,49 €"
     },
-    "upcoming_4e469c7d8bbf49bcabc2c07127d3d946": {
-      "title": "Sorry We're Closed",
-      "url": "https://store.epicgames.com/fr/p/sorry-were-closed-724c86",
-      "notified_at": "2026-10-22T16:22:30.820485+00:00",
-      "value": "22,39 €"
-    },
     "mobile_home---a-unique-horror-adventure": {
       "title": "Home - A Unique Horror Adventure",
       "url": "https://store.epicgames.com/fr/p/home-ios-69cfcf",
@@ -455,7 +449,31 @@
       "url": "https://store.epicgames.com/fr/p/mafia-hotel-eaea4c",
       "notified_at": "2026-10-24T19:04:50.713958+00:00",
       "value": "1,79 €"
+    },
+    "4e469c7d8bbf49bcabc2c07127d3d946": {
+      "title": "Sorry We're Closed",
+      "url": "https://store.epicgames.com/fr/p/sorry-were-closed-724c86",
+      "notified_at": "2026-10-29T17:36:33.176293+00:00",
+      "value": "22,39 €"
+    },
+    "upcoming_a9748abde1c94b66aae5250bb9fc5503": {
+      "title": "Idle Champions of the Forgotten Realms",
+      "url": "https://store.epicgames.com/fr/p/idle-champions-of-the-forgotten-realms",
+      "notified_at": "2026-10-29T17:36:33.176376+00:00",
+      "value": null
+    },
+    "upcoming_3be0a0d8479946d78f60d90c9442a0b4": {
+      "title": "Flotsam",
+      "url": "https://store.epicgames.com/fr/p/flotsam-266287",
+      "notified_at": "2026-10-29T17:36:33.176453+00:00",
+      "value": "19,99 €"
+    },
+    "mobile_galaxy-kart": {
+      "title": "Galaxy Kart",
+      "url": "https://store.epicgames.com/fr/p/galaxy-kart-ios-0cfcc7",
+      "notified_at": "2026-10-29T17:36:34.792534+00:00",
+      "value": "17,99 €"
     }
   },
-  "updated_at": "2026-10-24T19:04:52.251013+00:00"
+  "updated_at": "2026-10-29T17:36:36.221562+00:00"
 }
