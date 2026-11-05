@@ -456,18 +456,6 @@
       "notified_at": "2026-10-29T17:36:33.176293+00:00",
       "value": "22,39 €"
     },
-    "upcoming_a9748abde1c94b66aae5250bb9fc5503": {
-      "title": "Idle Champions of the Forgotten Realms",
-      "url": "https://store.epicgames.com/fr/p/idle-champions-of-the-forgotten-realms",
-      "notified_at": "2026-10-29T17:36:33.176376+00:00",
-      "value": null
-    },
-    "upcoming_3be0a0d8479946d78f60d90c9442a0b4": {
-      "title": "Flotsam",
-      "url": "https://store.epicgames.com/fr/p/flotsam-266287",
-      "notified_at": "2026-10-29T17:36:33.176453+00:00",
-      "value": "19,99 €"
-    },
     "mobile_galaxy-kart": {
       "title": "Galaxy Kart",
       "url": "https://store.epicgames.com/fr/p/galaxy-kart-ios-0cfcc7",
@@ -551,7 +539,37 @@
       "url": "https://store.epicgames.com/fr/p/horror-adventure-26ec62",
       "notified_at": "2026-11-01T23:30:43.751612+00:00",
       "value": "8,99 €"
+    },
+    "a9748abde1c94b66aae5250bb9fc5503": {
+      "title": "Idle Champions of the Forgotten Realms",
+      "url": "https://store.epicgames.com/fr/p/idle-champions-of-the-forgotten-realms",
+      "notified_at": "2026-11-05T19:02:13.515000+00:00",
+      "value": null
+    },
+    "3be0a0d8479946d78f60d90c9442a0b4": {
+      "title": "Flotsam",
+      "url": "https://store.epicgames.com/fr/p/flotsam-266287",
+      "notified_at": "2026-11-05T19:02:13.515098+00:00",
+      "value": "19,99 €"
+    },
+    "upcoming_9975548b6d404a94b8a9bdb34cad49e9": {
+      "title": "Knightica",
+      "url": "https://store.epicgames.com/fr/p/knightica-3be45c",
+      "notified_at": "2026-11-05T19:02:13.515198+00:00",
+      "value": "13,49 €"
+    },
+    "mobile_chants-of-sennaar": {
+      "title": "Chants of Sennaar",
+      "url": "https://store.epicgames.com/fr/p/chants-of-sennaar-ios-6bd071",
+      "notified_at": "2026-11-05T19:02:14.915735+00:00",
+      "value": "7,19 €"
+    },
+    "mobile_idle-champions-of-the-forgotten-realms": {
+      "title": "Idle Champions of the Forgotten Realms",
+      "url": "https://store.epicgames.com/fr/p/idle-champions-of-the-forgotten-realms-ios-77e761",
+      "notified_at": "2026-11-05T19:02:14.915819+00:00",
+      "value": ""
     }
   },
-  "updated_at": "2026-11-01T23:30:49.429614+00:00"
+  "updated_at": "2026-11-05T19:02:16.697129+00:00"
 }
