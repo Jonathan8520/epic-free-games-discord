@@ -552,12 +552,6 @@
       "notified_at": "2026-11-05T19:02:13.515098+00:00",
       "value": "19,99 €"
     },
-    "upcoming_9975548b6d404a94b8a9bdb34cad49e9": {
-      "title": "Knightica",
-      "url": "https://store.epicgames.com/fr/p/knightica-3be45c",
-      "notified_at": "2026-11-05T19:02:13.515198+00:00",
-      "value": "13,49 €"
-    },
     "mobile_chants-of-sennaar": {
       "title": "Chants of Sennaar",
       "url": "https://store.epicgames.com/fr/p/chants-of-sennaar-ios-6bd071",
@@ -575,7 +569,31 @@
       "url": "https://store.epicgames.com/fr/p/good-morning-human-gmhgood-morning-human-demo-e5e2cd",
       "notified_at": "2026-11-06T00:08:26.923736+00:00",
       "value": "9,89 €"
+    },
+    "9975548b6d404a94b8a9bdb34cad49e9": {
+      "title": "Knightica",
+      "url": "https://store.epicgames.com/fr/p/knightica-3be45c",
+      "notified_at": "2026-11-12T19:09:52.308404+00:00",
+      "value": "13,49 €"
+    },
+    "upcoming_d37f3694e7a04edb8347f3cb6320f9d3": {
+      "title": "Alien: Isolation",
+      "url": "https://store.epicgames.com/fr/p/alien-isolation",
+      "notified_at": "2026-11-12T19:09:52.308487+00:00",
+      "value": "39,99 €"
+    },
+    "upcoming_1f9a12b06b4f437790b6913ad136a08c": {
+      "title": "Mark of the Deep",
+      "url": "https://store.epicgames.com/fr/p/mark-of-the-deep-f7dc08",
+      "notified_at": "2026-11-12T19:09:52.308570+00:00",
+      "value": "19,50 €"
+    },
+    "mobile_knightica": {
+      "title": "Knightica",
+      "url": "https://store.epicgames.com/fr/p/knightica-ios-b4550a",
+      "notified_at": "2026-11-12T19:09:53.359708+00:00",
+      "value": "4,49 €"
     }
   },
-  "updated_at": "2026-11-06T00:08:28.944484+00:00"
+  "updated_at": "2026-11-12T19:09:54.772063+00:00"
 }
