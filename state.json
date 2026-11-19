@@ -582,12 +582,6 @@
       "notified_at": "2026-11-12T19:09:52.308487+00:00",
       "value": "39,99 €"
     },
-    "upcoming_1f9a12b06b4f437790b6913ad136a08c": {
-      "title": "Mark of the Deep",
-      "url": "https://store.epicgames.com/fr/p/mark-of-the-deep-f7dc08",
-      "notified_at": "2026-11-12T19:09:52.308570+00:00",
-      "value": "19,50 €"
-    },
     "mobile_knightica": {
       "title": "Knightica",
       "url": "https://store.epicgames.com/fr/p/knightica-ios-b4550a",
@@ -605,7 +599,25 @@
       "url": "https://store.epicgames.com/fr/p/firestone-online-idle-rpg-bfd04b",
       "notified_at": "2026-11-18T16:38:20.893424+00:00",
       "value": null
+    },
+    "1f9a12b06b4f437790b6913ad136a08c": {
+      "title": "Mark of the Deep",
+      "url": "https://store.epicgames.com/fr/p/mark-of-the-deep-f7dc08",
+      "notified_at": "2026-11-19T21:50:18.911921+00:00",
+      "value": "19,50 €"
+    },
+    "upcoming_f0a333114190492c84a9decd2bb43875": {
+      "title": "Bread and Fred",
+      "url": "https://store.epicgames.com/fr/p/bread-and-fred-1db362",
+      "notified_at": "2026-11-19T21:50:18.911974+00:00",
+      "value": "13,49 €"
+    },
+    "mobile_lonesome-village": {
+      "title": "Lonesome Village",
+      "url": "https://store.epicgames.com/fr/p/lonesome-village-ios-2a807f",
+      "notified_at": "2026-11-19T21:50:20.882972+00:00",
+      "value": "4,49 €"
     }
   },
-  "updated_at": "2026-11-18T16:38:22.671808+00:00"
+  "updated_at": "2026-11-19T21:50:24.583434+00:00"
 }
