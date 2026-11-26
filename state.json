@@ -594,23 +594,11 @@
       "notified_at": "2026-11-17T17:44:17.986502+00:00",
       "value": "4,49 €"
     },
-    "upcoming_0623017cf9f341efbe07557f46beb4e8": {
-      "title": "Firestone – Idle Clicker Online RPG",
-      "url": "https://store.epicgames.com/fr/p/firestone-online-idle-rpg-bfd04b",
-      "notified_at": "2026-11-18T16:38:20.893424+00:00",
-      "value": null
-    },
     "1f9a12b06b4f437790b6913ad136a08c": {
       "title": "Mark of the Deep",
       "url": "https://store.epicgames.com/fr/p/mark-of-the-deep-f7dc08",
       "notified_at": "2026-11-19T21:50:18.911921+00:00",
       "value": "19,50 €"
-    },
-    "upcoming_f0a333114190492c84a9decd2bb43875": {
-      "title": "Bread and Fred",
-      "url": "https://store.epicgames.com/fr/p/bread-and-fred-1db362",
-      "notified_at": "2026-11-19T21:50:18.911974+00:00",
-      "value": "13,49 €"
     },
     "mobile_lonesome-village": {
       "title": "Lonesome Village",
@@ -623,7 +611,31 @@
       "url": "https://store.epicgames.com/fr/p/strange-antiquities-e37660",
       "notified_at": "2026-11-26T15:01:42.455126+00:00",
       "value": "16,19 €"
+    },
+    "0623017cf9f341efbe07557f46beb4e8": {
+      "title": "Firestone – Idle Clicker Online RPG",
+      "url": "https://store.epicgames.com/fr/p/firestone-online-idle-rpg-bfd04b",
+      "notified_at": "2026-11-26T23:45:57.331008+00:00",
+      "value": null
+    },
+    "f0a333114190492c84a9decd2bb43875": {
+      "title": "Bread and Fred",
+      "url": "https://store.epicgames.com/fr/p/bread-and-fred-1db362",
+      "notified_at": "2026-11-26T23:45:57.331058+00:00",
+      "value": "13,49 €"
+    },
+    "mobile_a-tiny-sticker-tale": {
+      "title": "A Tiny Sticker Tale",
+      "url": "https://store.epicgames.com/fr/p/a-tiny-sticker-tale-ios-3aad92",
+      "notified_at": "2026-11-26T23:45:58.752672+00:00",
+      "value": "3,59 €"
+    },
+    "mobile_firestone---idle-clicker-online-rpg": {
+      "title": "Firestone – Idle Clicker Online RPG",
+      "url": "https://store.epicgames.com/fr/p/firestone-online-idle-rpg-ios-b0619c",
+      "notified_at": "2026-11-26T23:45:58.752713+00:00",
+      "value": ""
     }
   },
-  "updated_at": "2026-11-26T15:01:45.186030+00:00"
+  "updated_at": "2026-11-26T23:45:59.626860+00:00"
 }
